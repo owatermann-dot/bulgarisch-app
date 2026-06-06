@@ -373,8 +373,8 @@
       transition: all 0.2s;
     }
     .mode-btn.active {
-      background: rgba(255,107,107,0.22);
-      border-color: var(--rose); color: var(--rose);
+      background: rgba(var(--primary-rgb, 168,85,247), 0.22);
+      border-color: var(--primary); color: var(--primary);
     }
     .srs-strip {
       background: var(--card); border-radius: 11px;
@@ -704,20 +704,9 @@
       </div>
     </div>
 
-    <!-- ══════════ MAP ══════════ -->
-    <div class="screen" id="screen-map">
-      <div style="padding-top:8px">
-        <div style="color:var(--text);font-size:16px;font-weight:900;margin-bottom:2px">🗺️ Bulgarien entdecken</div>
-        <div style="color:var(--muted);font-size:12px;margin-bottom:12px" id="map-subtitle">0 von 10 Städten frei</div>
-      </div>
-      <div class="card" style="margin-bottom:12px">
-        <div id="city-buttons" style="display:flex;flex-wrap:wrap;gap:7px;justify-content:center">
-          <!-- filled by JS -->
-        </div>
-        <div id="city-fact" style="display:none;margin-top:14px"><!-- filled by JS --></div>
-      </div>
-      <div class="label" style="margin-bottom:7px">Freischalt-Übersicht</div>
-      <div id="city-list"><!-- filled by JS --></div>
+    <!-- ══════════ MEIN PROFIL ══════════ -->
+    <div class="screen" id="screen-profil">
+      <div id="profil-content"><!-- filled by JS --></div>
     </div>
 
     <!-- ══════════ ADMIN ══════════ -->
@@ -763,9 +752,9 @@
       <span class="nav-label">Gespräch</span>
       <div class="nav-bar"></div>
     </button>
-    <button class="nav-btn" id="nav-map" onclick="nav('map')">
-      <span class="nav-icon">🗺️</span>
-      <span class="nav-label">Karte</span>
+    <button class="nav-btn" id="nav-profil" onclick="nav('profil')">
+      <span class="nav-icon" id="nav-profil-icon">👤</span>
+      <span class="nav-label">Profil</span>
       <div class="nav-bar"></div>
     </button>
     <button class="nav-btn" id="nav-admin" onclick="nav('admin')">
@@ -1137,7 +1126,7 @@ function nav(screenId){
   if(screenId==='home')    renderHome();
   if(screenId==='learn')   renderLearn();
   if(screenId==='chat')    renderChat();
-  if(screenId==='map')     renderMap();
+  if(screenId==='profil')  renderProfil();
   if(screenId==='admin')   renderAdmin();
 }
 
@@ -1293,14 +1282,15 @@ function getPerfectCount() {
   return Object.values(state.deck).filter(c => c.phase === 'mastered').length;
 }
 
+const LERNPFAD_BASE = 200; // always 200 original sentences = 100%
+
 function getTotalSentences() {
-  return getAllSentences().length;
+  return getAllSentences().length; // includes teacher-added extras
 }
 
 function getLernpfadPct() {
-  const total = getTotalSentences();
-  if (total === 0) return 0;
-  return Math.min(100, Math.round((getPerfectCount() / total) * 100));
+  // Base is always 200 — teacher-added sentences are bonus beyond 100%
+  return Math.min(100, Math.round((getPerfectCount() / LERNPFAD_BASE) * 100));
 }
 
 function getLernpfadLevel(pct) {
@@ -1441,17 +1431,11 @@ function renderHome() {
   const ctaColor = dueCount > 0
     ? `linear-gradient(135deg,var(--rose),#ff8e53)`
     : `linear-gradient(135deg,${theme.primary},${theme.primary}aa)`;
-  const ctaText = isNewUser
-    ? `▶  ${dailyTarget} Sätze lernen`
-    : dueCount > 0
-      ? `▶  ${dueCount} Sätze wiederholen`
-      : `▶  Neue Sätze lernen`;
-
-  startBtn.style.background = ctaColor;
+  startBtn.style.background = `linear-gradient(135deg, ${theme.primary}, ${theme.primary}cc)`;
   startBtn.innerHTML = `
     <div style="display:flex;flex-direction:column;align-items:center;gap:6px;width:100%">
       <div style="display:flex;align-items:center;gap:10px;font-size:15px;font-weight:900">
-        <span>▶</span><span>${isNewUser ? dailyTarget + ' Sätze lernen' : dueCount > 0 ? dueCount + ' Sätze wiederholen' : 'Neue Sätze lernen'}</span>
+        <span>▶</span><span>${dailyTarget} Sätze lernen</span>
       </div>
       <!-- Daily goal bar -->
       <div style="width:100%;background:rgba(255,255,255,0.2);border-radius:4px;height:5px">
@@ -1585,7 +1569,7 @@ function renderSentences(){
         <button class="rating-btn" onclick="learnRate(4)" style="background:rgba(255,209,102,0.22);border:1px solid rgba(255,209,102,0.55);color:var(--gold)">
           <span class="rb-icon">👍</span>Gut 😊<span class="rb-note">+${nextInterval}d</span>
         </button>
-        <button class="rating-btn" onclick="learnRate(5)" style="background:rgba(6,214,160,0.22);border:1px solid rgba(6,214,160,0.55);color:var(--teal)">
+        <button class="rating-btn" onclick="learnRate(5)" id="btn-perfekt" style="background:rgba(168,85,247,0.22);border:1px solid rgba(168,85,247,0.55);color:var(--primary)">
           <span class="rb-icon">⭐</span>Perfekt 🌟<span class="rb-note">+${Math.round(nextInterval*1.2)}d</span>
         </button>
       </div>`;
@@ -1682,9 +1666,12 @@ function learnRate(quality){
   state.learnShowBg=false;
   state.learnTranscript='';
   updateStreakBadge();
+  saveAll();
   renderSentences();
-  // Live update home counters if home visible
-  if(state.screen==='home') renderHome();
+  // Always update home counter so Perfekt shows immediately
+  renderHome();
+  // Check if a gift was just unlocked
+  checkGiftUnlocks();
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1935,7 +1922,7 @@ function chatRecord(){
 // ═══════════════════════════════════════════════════════════════
 // MAP RENDER
 // ═══════════════════════════════════════════════════════════════
-function renderMap(){
+function renderMap_DISABLED(){
   const mastered=getMasteredCount();
   const unlockedCount=CITIES.filter(c=>mastered>=c.unlockAt).length;
   document.getElementById('map-subtitle').textContent=`${unlockedCount} von ${CITIES.length} Städten frei`;
@@ -2408,6 +2395,439 @@ if('serviceWorker' in navigator){
 }
 
 
+
+// ═══════════════════════════════════════════════════════════════
+// ERFOLGS-GESCHENKE SYSTEM
+// ═══════════════════════════════════════════════════════════════
+
+const GIFT_LEVELS = [
+  { step:1, pct:20, label:"Standard",         emoji:"📦" },
+  { step:2, pct:40, label:"Fortgeschritten",  emoji:"🎁" },
+  { step:3, pct:60, label:"Super",            emoji:"🎀" },
+  { step:4, pct:80, label:"Experte",          emoji:"🏆" },
+  { step:5, pct:100,label:"Meister",          emoji:"👑" },
+];
+
+function getGifts() {
+  return LS.load('gifts', {
+    1: { message:"", unlocked:false },
+    2: { message:"", unlocked:false },
+    3: { message:"", unlocked:false },
+    4: { message:"", unlocked:false },
+    5: { message:"", unlocked:false },
+  });
+}
+function saveGifts(g) { LS.save('gifts', g); }
+
+function checkGiftUnlocks() {
+  const pct = getLernpfadPct();
+  const gifts = getGifts();
+  let changed = false;
+  GIFT_LEVELS.forEach(gl => {
+    if (pct >= gl.pct && !gifts[gl.step].unlocked) {
+      gifts[gl.step].unlocked = true;
+      changed = true;
+      showGiftUnlockCelebration(gl);
+    }
+  });
+  if (changed) saveGifts(gifts);
+}
+
+function showGiftUnlockCelebration(gl) {
+  // Override goodie modal for gift unlock
+  const g = {
+    icon: gl.emoji,
+    title: "Stufe freigeschaltet! 🎉",
+    content: `Du hast ${gl.label} erreicht!\n\nFrag Papa nach deinem Erfolgs-Geschenk! 🎁`,
+    color: getTheme(activeProfile?.themeId || 'purple').primary,
+  };
+  setTimeout(() => {
+    document.getElementById('gm-dots').innerHTML = ['#FF6B6B','#FFD166','#06D6A0','#A855F7','#38BDF8'].map((c,i)=>
+      `<div class="gm-dot anim-float" style="background:${c};animation-delay:${i*0.18}s"></div>`
+    ).join('');
+    document.getElementById('gm-icon').textContent = gl.emoji;
+    document.getElementById('gm-title').style.color = g.color;
+    document.getElementById('gm-title').textContent = g.title;
+    document.getElementById('gm-content').textContent = g.content;
+    document.getElementById('gm-btn').style.background = g.color;
+    document.querySelector('#goodie-modal .gm-card').style.border = `2px solid ${g.color}44`;
+    document.querySelector('#goodie-modal .gm-card').style.boxShadow = `0 0 60px ${g.color}44`;
+    document.getElementById('goodie-modal').classList.add('open');
+  }, 600);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MEIN PROFIL SCREEN
+// ═══════════════════════════════════════════════════════════════
+
+let editingProfileField = null; // 'name'|'goal'|'theme'|'emoji'|null
+
+function renderProfil() {
+  const p = activeProfile;
+  if (!p) return;
+  const theme = getTheme(p.themeId);
+  const pct = getLernpfadPct();
+  const perfect = getPerfectCount();
+  const gifts = getGifts();
+  const el = document.getElementById('profil-content');
+
+  el.innerHTML = `
+    <div style="padding:12px 16px 24px;display:flex;flex-direction:column;gap:16px">
+
+      <!-- Header -->
+      <div style="display:flex;justify-content:space-between;align-items:center;padding-top:6px">
+        <div style="color:var(--text);font-size:17px;font-weight:900">👤 Mein Profil</div>
+        <div style="background:${theme.primary}22;color:${theme.primary};
+          padding:4px 10px;border-radius:10px;font-size:11px;font-weight:800">
+          ${LERNPFAD_LEVELS[LERNPFAD_LEVELS.length-1] ? getLernpfadLevel(pct).label : ''}
+        </div>
+      </div>
+
+      <!-- Profile card -->
+      <div style="background:linear-gradient(135deg,${theme.primary}18,${theme.primary}06);
+        border:2px solid ${theme.primary}44;border-radius:22px;padding:20px;
+        display:flex;flex-direction:column;align-items:center;gap:12px">
+        <!-- Avatar (tap to change emoji) -->
+        <button onclick="profilEditEmoji()" style="width:72px;height:72px;border-radius:36px;
+          font-size:38px;display:flex;align-items:center;justify-content:center;
+          background:${theme.primary}22;border:3px solid ${theme.primary};
+          box-shadow:0 0 20px ${theme.primary}44;cursor:pointer;position:relative">
+          ${p.emoji}
+          <div style="position:absolute;bottom:-2px;right:-2px;width:22px;height:22px;
+            border-radius:11px;background:${theme.primary};display:flex;align-items:center;
+            justify-content:center;font-size:11px;border:2px solid var(--bg)">✏️</div>
+        </button>
+        <div style="color:${theme.primary};font-size:22px;font-weight:900">${p.name}</div>
+      </div>
+
+      <!-- Editable fields -->
+      <div class="card">
+        <div class="label" style="margin-bottom:10px">Profil bearbeiten</div>
+        ${[
+          { key:'name',  icon:'✏️', label:'Name',          val: p.name },
+          { key:'goal',  icon:'🎯', label:'Tagesziel',     val: (GOALS.find(g=>g.mins===p.dailyGoal)||GOALS[1]).label + ' · ' + p.dailyGoal + ' Min' },
+          { key:'theme', icon:'🎨', label:'Farbthema',     val: getTheme(p.themeId).name },
+          { key:'emoji', icon:'😊', label:'Avatar Emoji',  val: p.emoji },
+        ].map(f => `
+          <button onclick="profilEdit('${f.key}')" style="width:100%;background:none;border:none;
+            display:flex;align-items:center;gap:12px;padding:11px 0;
+            border-bottom:1px solid var(--border);cursor:pointer;text-align:left">
+            <span style="font-size:18px">${f.icon}</span>
+            <div style="flex:1">
+              <div style="color:var(--muted);font-size:10px;font-weight:800;letter-spacing:0.5px">${f.label.toUpperCase()}</div>
+              <div style="color:var(--text);font-size:14px;font-weight:700;margin-top:1px">${f.val}</div>
+            </div>
+            <span style="color:var(--muted);font-size:14px">›</span>
+          </button>`).join('')}
+      </div>
+
+      <!-- Edit panels (shown inline) -->
+      <div id="profil-edit-panel" style="display:none"></div>
+
+      <!-- Lernpfad + Geschenke -->
+      <div class="card">
+        <div class="label" style="margin-bottom:12px">Lernpfad & Erfolgs-Geschenke</div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+          <span style="color:var(--text);font-size:13px;font-weight:800">
+            ${getLernpfadLevel(pct).emoji} ${getLernpfadLevel(pct).label}
+          </span>
+          <span style="color:${theme.primary};font-size:13px;font-weight:800">${pct}%</span>
+        </div>
+        <div style="background:rgba(255,255,255,0.08);border-radius:6px;height:8px;margin-bottom:16px">
+          <div style="width:${pct}%;height:100%;border-radius:6px;
+            background:linear-gradient(90deg,${theme.primary},${theme.primary}88);
+            transition:width 0.8s ease"></div>
+        </div>
+        <!-- 5 gift boxes -->
+        <div style="display:flex;flex-direction:column;gap:10px">
+          ${GIFT_LEVELS.map(gl => {
+            const reached = pct >= gl.pct;
+            const gift = gifts[gl.step];
+            const prev = gl.step === 1 ? 0 : GIFT_LEVELS[gl.step-2].pct;
+            const segPct = Math.min(100, Math.max(0, Math.round((pct - prev) / (gl.pct - prev) * 100)));
+            return `<div style="background:${reached ? theme.primary+'18' : 'rgba(255,255,255,0.04)'};
+              border:1px solid ${reached ? theme.primary+'55' : 'var(--border)'};
+              border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:12px;
+              ${reached ? 'animation:pop 0.4s ease' : ''}">
+              <!-- Gift icon -->
+              <div style="font-size:28px;flex-shrink:0;
+                filter:${reached ? 'none' : 'grayscale(1) opacity(0.4)'}">
+                ${reached ? gl.emoji : '🔒'}
+              </div>
+              <div style="flex:1">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+                  <span style="color:${reached ? theme.primary : 'var(--muted)'};
+                    font-size:12px;font-weight:800">Stufe ${gl.step} — ${gl.label}</span>
+                  <span style="color:${reached ? theme.primary : 'var(--muted)'};
+                    font-size:11px;font-weight:700">ab ${gl.pct}%</span>
+                </div>
+                ${reached
+                  ? `<div style="color:var(--text);font-size:13px;font-weight:700">
+                       🎁 Frag Papa nach deinem Geschenk!
+                     </div>`
+                  : `<div style="background:rgba(255,255,255,0.06);border-radius:6px;height:5px">
+                       <div style="width:${segPct}%;height:100%;border-radius:6px;
+                         background:var(--muted)"></div>
+                     </div>
+                     <div style="color:var(--muted);font-size:11px;margin-top:3px">
+                       Noch ${Math.ceil((gl.pct/100)*LERNPFAD_BASE) - perfect} Sätze perfekt
+                     </div>`
+                }
+              </div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+
+      <!-- Lernstatistik -->
+      <div class="card">
+        <div class="label" style="margin-bottom:10px">Lernstatistik</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          ${[
+            { l:'Perfekt', v: perfect,       c: theme.primary },
+            { l:'Gesamt',  v: getTotalSentences(), c:'var(--text)' },
+            { l:'Serie',   v: (state.streak?.count||0)+'🔥', c:'var(--gold)' },
+            { l:'Ziel/Tag',v: p.dailyGoal+'m', c:'var(--teal)' },
+          ].map(s=>`<div style="flex:1;min-width:70px;background:var(--cardd);
+            border-radius:12px;padding:10px 6px;text-align:center;border:1px solid var(--border)">
+            <div style="color:${s.c};font-size:16px;font-weight:900">${s.v}</div>
+            <div style="color:var(--muted);font-size:9px;font-weight:800;margin-top:2px">${s.l.toUpperCase()}</div>
+          </div>`).join('')}
+        </div>
+      </div>
+
+      <!-- Profile switching -->
+      <div class="card" style="display:flex;flex-direction:column;gap:8px">
+        <div class="label" style="margin-bottom:4px">Profile</div>
+        <button onclick="showProfileSelector()" style="width:100%;background:${theme.primary}18;
+          border:1px solid ${theme.primary}44;border-radius:14px;padding:12px;
+          color:${theme.primary};font-size:13px;font-weight:800;cursor:pointer;
+          display:flex;align-items:center;justify-content:center;gap:8px">
+          👥 Profil wechseln
+        </button>
+        <button onclick="confirmDeleteCurrentProfile()" style="width:100%;background:rgba(255,107,107,0.12);
+          border:1px solid rgba(255,107,107,0.33);border-radius:14px;padding:12px;
+          color:var(--rose);font-size:13px;font-weight:800;cursor:pointer;
+          display:flex;align-items:center;justify-content:center;gap:8px">
+          🗑️ Dieses Profil löschen
+        </button>
+      </div>
+
+    </div>
+  `;
+}
+
+// ── Inline edit panels for profile fields
+function profilEdit(field) {
+  const p = activeProfile;
+  const theme = getTheme(p.themeId);
+  const panel = document.getElementById('profil-edit-panel');
+  if (!panel) return;
+
+  if (editingProfileField === field) {
+    panel.style.display = 'none';
+    editingProfileField = null;
+    return;
+  }
+  editingProfileField = field;
+  panel.style.display = 'block';
+
+  if (field === 'name') {
+    panel.innerHTML = `
+      <div class="card" style="animation:slideUp 0.2s ease">
+        <div class="label" style="margin-bottom:8px">Name ändern</div>
+        <input id="profil-name-inp" type="text" value="${p.name}" maxlength="20"
+          style="width:100%;background:var(--cardd);border:2px solid ${theme.primary};
+            border-radius:12px;padding:12px;color:var(--text);font-size:16px;font-weight:700;text-align:center"/>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button onclick="profilCancelEdit()" class="btn-secondary" style="flex:1;padding:10px">Abbrechen</button>
+          <button onclick="profilSave('name', document.getElementById('profil-name-inp').value)"
+            style="flex:2;background:linear-gradient(135deg,${theme.primary},${theme.primary}aa);
+              border:none;border-radius:12px;padding:10px;color:white;font-size:13px;font-weight:900;cursor:pointer">
+            Speichern ✓
+          </button>
+        </div>
+      </div>`;
+    setTimeout(() => document.getElementById('profil-name-inp')?.focus(), 100);
+  }
+
+  if (field === 'goal') {
+    panel.innerHTML = `
+      <div class="card" style="animation:slideUp 0.2s ease">
+        <div class="label" style="margin-bottom:8px">Tagesziel ändern</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          ${GOALS.map(g => `
+            <button onclick="profilSave('goal', ${g.mins})" style="
+              background:${p.dailyGoal===g.mins ? theme.primary+'22' : 'var(--cardd)'};
+              border:2px solid ${p.dailyGoal===g.mins ? theme.primary : 'var(--border)'};
+              border-radius:12px;padding:11px 14px;color:var(--text);font-size:13px;
+              font-weight:800;cursor:pointer;display:flex;align-items:center;gap:10px;
+              font-family:inherit">
+              <span style="font-size:20px">${g.emoji}</span>
+              <div style="text-align:left">
+                <div>${g.label}</div>
+                <div style="color:var(--muted);font-size:11px">${g.desc}</div>
+              </div>
+              ${p.dailyGoal===g.mins ? `<span style="margin-left:auto;color:${theme.primary}">✓</span>` : ''}
+            </button>`).join('')}
+        </div>
+        <button onclick="profilCancelEdit()" class="btn-secondary" style="width:100%;margin-top:8px;padding:10px">Abbrechen</button>
+      </div>`;
+  }
+
+  if (field === 'theme') {
+    panel.innerHTML = `
+      <div class="card" style="animation:slideUp 0.2s ease">
+        <div class="label" style="margin-bottom:8px">Farbthema ändern</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          ${THEMES.map(t => `
+            <button onclick="profilSave('theme', '${t.id}')" style="
+              background:${p.themeId===t.id ? t.primary+'22' : 'var(--cardd)'};
+              border:2px solid ${p.themeId===t.id ? t.primary : 'var(--border)'};
+              border-radius:12px;padding:11px 14px;cursor:pointer;
+              display:flex;align-items:center;gap:12px;font-family:inherit">
+              <div style="width:32px;height:32px;border-radius:16px;flex-shrink:0;
+                background:linear-gradient(135deg,${t.primary},${t.primary}88)"></div>
+              <span style="color:var(--text);font-size:14px;font-weight:800">${t.name}</span>
+              ${p.themeId===t.id ? `<span style="margin-left:auto;color:${t.primary};font-size:18px">✓</span>` : ''}
+            </button>`).join('')}
+        </div>
+        <button onclick="profilCancelEdit()" class="btn-secondary" style="width:100%;margin-top:8px;padding:10px">Abbrechen</button>
+      </div>`;
+  }
+
+  if (field === 'emoji') {
+    profilEditEmoji();
+  }
+}
+
+function profilEditEmoji() {
+  const theme = getTheme(activeProfile.themeId);
+  const panel = document.getElementById('profil-edit-panel');
+  if (!panel) return;
+  editingProfileField = 'emoji';
+  panel.style.display = 'block';
+  panel.innerHTML = `
+    <div class="card" style="animation:slideUp 0.2s ease">
+      <div class="label" style="margin-bottom:8px">Avatar Emoji wählen</div>
+      ${['animals','nature','hobby'].map((cat,ci) => {
+        const labels = ['Tiere','Natur & Magie','Spaß & Hobbys'];
+        return `<div style="color:var(--muted);font-size:9px;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin:8px 0 6px">${labels[ci]}</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px">
+            ${EMOJI_SETS[cat].map(e=>`
+              <button onclick="profilSave('emoji','${e}')" style="width:44px;height:44px;border-radius:12px;font-size:22px;
+                background:${activeProfile.emoji===e ? theme.primary+'33' : 'var(--cardd)'};
+                border:2px solid ${activeProfile.emoji===e ? theme.primary : 'var(--border)'};cursor:pointer">${e}</button>`
+            ).join('')}
+          </div>`;
+      }).join('')}
+      <button onclick="profilCancelEdit()" class="btn-secondary" style="width:100%;margin-top:10px;padding:10px">Abbrechen</button>
+    </div>`;
+}
+
+function profilSave(field, value) {
+  if (!value || (field==='name' && value.trim().length < 2)) return;
+  const profiles = LS.load('profiles', []);
+  const updated = profiles.map(p =>
+    p.id === activeProfile.id ? { ...p, [field]: field==='name' ? value.trim() : value } : p
+  );
+  LS.save('profiles', updated);
+  activeProfile = updated.find(p => p.id === activeProfile.id);
+  if (field === 'theme') applyTheme(value);
+  profilCancelEdit();
+  showToast('✅ Gespeichert!');
+  renderProfil();
+  renderHome();
+  // Update nav avatar
+  document.getElementById('nav-profil-icon').textContent = activeProfile.emoji;
+}
+
+function profilCancelEdit() {
+  const panel = document.getElementById('profil-edit-panel');
+  if (panel) { panel.style.display = 'none'; panel.innerHTML = ''; }
+  editingProfileField = null;
+}
+
+function confirmDeleteCurrentProfile() {
+  const panel = document.getElementById('profil-edit-panel');
+  if (!panel) return;
+  panel.style.display = 'block';
+  panel.innerHTML = `
+    <div style="background:rgba(255,107,107,0.12);border:1px solid rgba(255,107,107,0.44);
+      border-radius:16px;padding:16px;animation:pop 0.3s ease">
+      <div style="color:var(--rose);font-size:14px;font-weight:800;margin-bottom:8px">
+        ⚠️ Profil wirklich löschen?
+      </div>
+      <div style="color:var(--muted);font-size:12px;margin-bottom:12px;line-height:1.5">
+        Alle Lernfortschritte für "${activeProfile.name}" werden dauerhaft gelöscht.
+      </div>
+      <div style="display:flex;gap:8px">
+        <button onclick="profilCancelEdit()" class="btn-secondary" style="flex:1;padding:10px">Nein</button>
+        <button onclick="deleteProfile('${activeProfile.id}')" style="flex:2;background:var(--rose);
+          border:none;border-radius:12px;padding:10px;color:white;font-size:13px;
+          font-weight:900;cursor:pointer">Ja, löschen</button>
+      </div>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ADMIN: ERFOLGS-GESCHENKE section
+// ═══════════════════════════════════════════════════════════════
+
+function renderAdminGifts() {
+  const gifts = getGifts();
+  const theme = getTheme(activeProfile?.themeId || 'purple');
+  return `
+    <div style="margin-top:8px">
+      <div class="label" style="margin-bottom:10px">🎁 Erfolgs-Geschenke (Stufen 1–5)</div>
+      <div style="background:rgba(56,189,248,0.1);border-radius:10px;padding:9px 12px;
+        border:1px solid rgba(56,189,248,0.33);color:var(--muted);font-size:11px;
+        line-height:1.6;margin-bottom:12px">
+        💡 Schreibe für jede Stufe eine persönliche Überraschungs-Nachricht.
+        Das Kind sieht nur "Frag Papa!" — die Nachricht bleibt hier verborgen bis du sie verrätst.
+      </div>
+      ${GIFT_LEVELS.map(gl => {
+        const gift = gifts[gl.step];
+        return `<div style="background:var(--cardd);border-radius:14px;padding:12px 14px;
+          border:1px solid var(--border);margin-bottom:8px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+            <span style="font-size:22px">${gl.emoji}</span>
+            <div style="flex:1">
+              <div style="color:var(--text);font-size:13px;font-weight:800">
+                Stufe ${gl.step} — ${gl.label} (ab ${gl.pct}%)
+              </div>
+              <div style="color:${gift.unlocked ? 'var(--teal)' : 'var(--muted)'};font-size:11px">
+                ${gift.unlocked ? '✓ Bereits freigeschaltet' : 'Noch nicht erreicht'}
+              </div>
+            </div>
+          </div>
+          <textarea id="gift-msg-${gl.step}" rows="2" maxlength="120"
+            placeholder="z.B. Kinobesuch mit Papa 🎬 — nur du siehst das hier..."
+            style="width:100%;background:var(--card);border:1px solid var(--border);
+              border-radius:9px;padding:8px 10px;color:var(--text);font-size:12px;
+              resize:none;font-family:inherit">${gift.message || ''}</textarea>
+          <button onclick="saveGiftMessage(${gl.step})" style="
+            margin-top:7px;width:100%;
+            background:linear-gradient(135deg,${theme.primary},${theme.primary}aa);
+            border:none;border-radius:9px;padding:8px;color:white;
+            font-size:11px;font-weight:800;cursor:pointer">
+            💾 Nachricht speichern
+          </button>
+        </div>`;
+      }).join('')}
+    </div>`;
+}
+
+function saveGiftMessage(step) {
+  requirePin(() => {
+    const msg = document.getElementById('gift-msg-'+step)?.value?.trim() || '';
+    const gifts = getGifts();
+    gifts[step].message = msg;
+    saveGifts(gifts);
+    showToast('✅ Geschenk-Nachricht gespeichert!');
+  });
+}
+
 // ═══════════════════════════════════════════════════════════════
 // PROFILE & ONBOARDING SYSTEM
 // ═══════════════════════════════════════════════════════════════
@@ -2741,6 +3161,7 @@ function onProfileLoaded(profile){
   // Sync deck for this profile's sentences
   syncDeck();
   updateStreak();
+  checkGiftUnlocks();
   updateStreakBadge();
   // Re-render current screen
   renderHome();
