@@ -1,0 +1,2610 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0A0914" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Bulgarisch" />
+  <meta name="description" content="Lerne Bulgarisch mit Sätzen, Gesprächen und Zahlen" />
+
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+  <link rel="icon" type="image/png" href="/icons/icon-192.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+
+  <title>Bulgarisch Lern-App</title>
+
+  <style>
+    /* ── Reset & Base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:       #0A0914;
+      --card:     #13112A;
+      --cardl:    #1C1938;
+      --cardd:    #0E0C1F;
+      --rose:     #FF6B6B;
+      --gold:     #FFD166;
+      --teal:     #06D6A0;
+      --purple:   #A855F7;
+      --blue:     #38BDF8;
+      --text:     #F0ECFF;
+      --muted:    #6B6880;
+      --border:   #252240;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bot: env(safe-area-inset-bottom, 0px);
+    }
+    html, body {
+      height: 100%; width: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Nunito', sans-serif;
+      overflow: hidden;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-font-smoothing: antialiased;
+    }
+    button { font-family: inherit; cursor: pointer; }
+    textarea, input { font-family: inherit; }
+    ::-webkit-scrollbar { width: 3px; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    input:focus, textarea:focus { outline: none; border-color: var(--purple) !important; }
+    /* ── Onboarding & Profile System ── */
+    #onboarding-overlay, #profile-overlay {
+      position:fixed; inset:0; background:var(--bg);
+      display:none; flex-direction:column;
+      max-width:430px; margin:0 auto; z-index:500;
+    }
+    #onboarding-overlay.active, #profile-overlay.active { display:flex; }
+    .ob-progress { height:4px; background:var(--cardl); flex-shrink:0; }
+    .ob-fill { height:100%; border-radius:2px; transition:width 0.4s ease; }
+    .ob-screen { flex:1; overflow-y:auto; display:none; flex-direction:column; padding:28px 22px; gap:18px; }
+    .ob-screen.active { display:flex; }
+    .ob-center { align-items:center; justify-content:center; text-align:center; }
+    .emoji-grid { display:flex; flex-wrap:wrap; gap:8px; }
+    .emoji-btn { width:52px; height:52px; border-radius:14px; font-size:26px; cursor:pointer; transition:all 0.15s; border:2px solid var(--border); background:var(--card); }
+    .emoji-btn.selected { transform:scale(1.15); }
+    .theme-btn { display:flex; align-items:center; gap:14px; border-radius:16px; padding:12px 16px; cursor:pointer; transition:all 0.2s; border:2px solid var(--border); background:var(--card); width:100%; }
+    .theme-circle { width:40px; height:40px; border-radius:20px; flex-shrink:0; display:flex; align-items:center; justify-content:center; border:2px solid transparent; }
+    .goal-btn { display:flex; align-items:center; gap:14px; border-radius:16px; padding:14px 16px; cursor:pointer; transition:all 0.2s; border:2px solid var(--border); background:var(--card); width:100%; }
+    .profile-card-big { border-radius:28px; padding:28px; display:flex; flex-direction:column; align-items:center; gap:14px; }
+    .avatar-big { width:80px; height:80px; border-radius:40px; font-size:42px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .profile-selector-card { border-radius:20px; overflow:hidden; margin-bottom:12px; }
+    .profile-selector-btn { width:100%; background:none; border:none; cursor:pointer; padding:16px 18px; display:flex; align-items:center; gap:14px; text-align:left; }
+    .avatar-mid { width:56px; height:56px; border-radius:28px; font-size:30px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+    .add-profile-btn { background:none; border:2px dashed var(--border); border-radius:20px; padding:18px; color:var(--muted); font-size:14px; font-weight:800; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:10px; width:100%; font-family:inherit; }
+
+
+    /* ── App Shell ── */
+    #app {
+      position: fixed; inset: 0;
+      display: flex; flex-direction: column;
+      padding-top: var(--safe-top);
+      padding-bottom: var(--safe-bot);
+      max-width: 430px;
+      margin: 0 auto;
+      background: var(--bg);
+    }
+
+    /* ── Status bar spacer (iOS) ── */
+    #statusbar {
+      height: 44px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 22px;
+      background: var(--bg);
+    }
+    #statusbar .time { font-size: 13px; font-weight: 700; color: var(--text); }
+    #statusbar .pill { width: 90px; height: 10px; background: var(--card); border-radius: 8px; }
+    #statusbar .icons { font-size: 12px; color: var(--text); }
+
+    /* ── Screen container ── */
+    #screen-container {
+      flex: 1; overflow: hidden;
+      display: flex; flex-direction: column;
+    }
+    .screen {
+      flex: 1; overflow-y: auto;
+      display: none; flex-direction: column;
+      padding: 0 16px 16px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .screen.active { display: flex; }
+
+    /* ── Bottom navigation ── */
+    #nav {
+      flex-shrink: 0;
+      display: flex;
+      background: var(--card);
+      border-top: 1px solid var(--border);
+      padding: 6px 0 14px;
+    }
+    .nav-btn {
+      flex: 1; background: none; border: none;
+      display: flex; flex-direction: column; align-items: center; gap: 2px;
+      padding: 4px 0; position: relative;
+    }
+    .nav-btn .nav-icon { font-size: 20px; }
+    .nav-btn .nav-label {
+      font-size: 9px; font-weight: 800; letter-spacing: 0.4px;
+      color: var(--muted); text-transform: uppercase;
+    }
+    .nav-btn.active .nav-label { color: var(--gold); }
+    .nav-btn .nav-bar {
+      width: 18px; height: 2.5px;
+      background: var(--gold); border-radius: 2px;
+      display: none;
+    }
+    .nav-btn.active .nav-bar { display: block; }
+    .nav-badge {
+      position: absolute; top: 0; right: 18%;
+      background: var(--rose); border-radius: 8px;
+      min-width: 16px; height: 16px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 9px; font-weight: 900; color: white; padding: 0 3px;
+    }
+
+    /* ── Cards & common elements ── */
+    .card {
+      background: var(--card); border-radius: 18px;
+      border: 1px solid var(--border); padding: 14px 16px;
+    }
+    .card-deep {
+      background: var(--cardd); border-radius: 14px;
+      border: 1px solid var(--border); padding: 12px 14px;
+    }
+    .label {
+      font-size: 10px; font-weight: 800; letter-spacing: 1px;
+      color: var(--muted); text-transform: uppercase; margin-bottom: 4px;
+    }
+    .btn-primary {
+      width: 100%; border: none; border-radius: 18px; padding: 15px;
+      color: white; font-size: 15px; font-weight: 900;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+    }
+    .btn-secondary {
+      background: var(--cardl); border: 1px solid var(--border);
+      border-radius: 12px; padding: 10px 16px;
+      color: var(--muted); font-size: 12px; font-weight: 800;
+    }
+    .chip {
+      display: inline-block; padding: 3px 9px; border-radius: 10px;
+      font-size: 10px; font-weight: 800;
+    }
+    .row { display: flex; gap: 8px; align-items: center; }
+    .col { display: flex; flex-direction: column; gap: 8px; }
+
+    /* ── Progress bar ── */
+    .prog-track {
+      background: rgba(255,255,255,0.08); border-radius: 6px; height: 7px;
+    }
+    .prog-fill {
+      height: 100%; border-radius: 6px;
+      transition: width 1s ease;
+    }
+
+    /* ── Dot rows ── */
+    .dots-row {
+      display: flex; gap: 3px;
+    }
+    .dot {
+      flex: 1; height: 6px; border-radius: 3px;
+      background: rgba(255,255,255,0.1);
+      transition: background 0.25s;
+    }
+
+    /* ── Modals ── */
+    .modal-backdrop {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.8);
+      display: none; align-items: center; justify-content: center;
+      z-index: 100; padding: 24px;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal-sheet {
+      position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+      width: 100%; max-width: 430px;
+      background: var(--card); border-radius: 22px 22px 0 0;
+      padding: 18px 18px 32px;
+      border: 1px solid var(--border);
+      display: none; z-index: 200;
+    }
+    .modal-sheet.open { display: block; animation: slideUp 0.3s ease; }
+    .modal-card {
+      background: var(--card); border-radius: 28px; padding: 28px;
+      width: 100%; max-width: 320px; text-align: center;
+    }
+    .modal-handle {
+      width: 36px; height: 4px; background: var(--border);
+      border-radius: 2px; margin: 0 auto 14px;
+    }
+
+    /* ── SRS phase dots (legend) ── */
+    .phase-dot { width: 7px; height: 7px; border-radius: 50%; }
+
+    /* ── Animations ── */
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+    @keyframes pop {
+      0%   { transform: scale(0.85); opacity: 0; }
+      70%  { transform: scale(1.04); }
+      100% { transform: scale(1);    opacity: 1; }
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50%       { transform: translateY(-5px); }
+    }
+    @keyframes glow {
+      0%, 100% { box-shadow: 0 0 10px rgba(255,209,102,0.2); }
+      50%       { box-shadow: 0 0 22px rgba(255,209,102,0.45); }
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.5; }
+    }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25%       { transform: translateX(-6px); }
+      75%       { transform: translateX(6px); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .anim-glow    { animation: glow 2.5s infinite; }
+    .anim-float   { animation: float 2s ease-in-out infinite; }
+    .anim-pulse   { animation: pulse 0.8s infinite; }
+    .anim-pop     { animation: pop 0.35s ease; }
+    .anim-fade    { animation: fadeIn 0.3s ease; }
+
+    /* ── Install banner ── */
+    #install-banner {
+      position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+      width: calc(100% - 32px); max-width: 400px;
+      background: linear-gradient(135deg, var(--purple), #6366f1);
+      border-radius: 16px; padding: 12px 16px;
+      display: none; align-items: center; gap: 10px;
+      z-index: 50; box-shadow: 0 8px 32px rgba(168,85,247,0.4);
+    }
+    #install-banner.show { display: flex; }
+    #install-banner .ib-text { flex: 1; }
+    #install-banner .ib-title { color: white; font-size: 13px; font-weight: 800; }
+    #install-banner .ib-sub   { color: rgba(255,255,255,0.7); font-size: 11px; }
+    #install-banner button    {
+      background: white; border: none; border-radius: 10px;
+      padding: 7px 12px; color: var(--purple);
+      font-size: 11px; font-weight: 900; white-space: nowrap;
+    }
+    #install-banner .ib-close {
+      background: none; border: none; color: rgba(255,255,255,0.6);
+      font-size: 18px; padding: 0 4px;
+    }
+
+    /* ── Goodie modal ── */
+    #goodie-modal {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.8);
+      display: none; align-items: center; justify-content: center;
+      z-index: 150; padding: 24px;
+    }
+    #goodie-modal.open { display: flex; }
+    #goodie-modal .gm-card {
+      background: var(--card); border-radius: 28px; padding: 28px;
+      width: 100%; max-width: 320px; text-align: center;
+    }
+    #goodie-modal .gm-dots { display: flex; justify-content: center; gap: 5px; margin-bottom: 14px; }
+    #goodie-modal .gm-dot  { width: 7px; height: 7px; border-radius: 4px; }
+
+    /* ── PIN modal ── */
+    #pin-modal {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+      display: none; align-items: center; justify-content: center;
+      z-index: 200; padding: 24px;
+    }
+    #pin-modal.open { display: flex; }
+    #pin-modal .pm-card {
+      background: var(--card); border-radius: 24px; padding: 28px;
+      width: 300px; text-align: center;
+      border: 1px solid var(--border);
+    }
+    .pin-inputs { display: flex; gap: 10px; justify-content: center; margin: 16px 0; }
+    .pin-input {
+      width: 48px; height: 52px;
+      background: var(--cardd); border: 2px solid var(--border);
+      border-radius: 12px; text-align: center;
+      font-size: 20px; font-weight: 900; color: var(--text);
+      transition: border-color 0.2s;
+    }
+    .pin-input:focus  { border-color: var(--purple); }
+    .pin-input.filled { border-color: var(--purple); }
+
+    /* ── Toasts ── */
+    #toast {
+      position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
+      background: var(--cardl); border: 1px solid var(--border);
+      border-radius: 12px; padding: 10px 18px;
+      color: var(--text); font-size: 13px; font-weight: 700;
+      display: none; z-index: 300; white-space: nowrap;
+      animation: fadeIn 0.3s ease;
+    }
+    #toast.show { display: block; }
+
+    /* ── Home screen specifics ── */
+    .level-card {
+      background: linear-gradient(135deg, #1a0e3a, #0e1a3a);
+      border-radius: 20px; padding: 16px;
+      margin-bottom: 10px;
+    }
+    .stat-grid { display: flex; gap: 7px; margin-bottom: 10px; }
+    .stat-cell {
+      flex: 1; background: var(--card); border-radius: 14px;
+      padding: 9px 6px; border: 1px solid var(--border); text-align: center;
+    }
+    .stat-val  { font-size: 15px; font-weight: 900; }
+    .stat-lbl  { font-size: 9px; font-weight: 800; color: var(--muted);
+                 text-transform: uppercase; margin-top: 1px; }
+    .cefr-row {
+      background: var(--card); border-radius: 11px;
+      padding: 8px 12px; border: 1px solid var(--border);
+      display: flex; align-items: center; gap: 9px; margin-bottom: 5px;
+    }
+    .cefr-circle {
+      width: 30px; height: 30px; border-radius: 15px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 900;
+      border: 2px solid var(--border);
+    }
+
+    /* ── Learn screen ── */
+    .mode-toggle {
+      display: flex; gap: 8px;
+      padding: 8px 16px;
+      background: var(--card); border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .mode-btn {
+      flex: 1; background: var(--cardl); border: 1px solid var(--border);
+      border-radius: 12px; padding: 8px;
+      color: var(--muted); font-size: 12px; font-weight: 800;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      transition: all 0.2s;
+    }
+    .mode-btn.active {
+      background: rgba(255,107,107,0.22);
+      border-color: var(--rose); color: var(--rose);
+    }
+    .srs-strip {
+      background: var(--card); border-radius: 11px;
+      padding: 7px 11px; border: 1px solid var(--border);
+      display: flex; gap: 14px; flex-shrink: 0;
+    }
+    .srs-item .srs-k { font-size: 9px; font-weight: 800; color: var(--muted); text-transform: uppercase; }
+    .srs-item .srs-v { font-size: 13px; font-weight: 900; color: var(--gold); }
+
+    /* ── Rating buttons ── */
+    .rating-row { display: flex; gap: 7px; }
+    .rating-btn {
+      flex: 1; border: none; border-radius: 13px; padding: 11px 4px;
+      font-size: 11px; font-weight: 800;
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+    }
+    .rating-btn .rb-icon { font-size: 17px; }
+    .rating-btn .rb-note { font-size: 9px; color: var(--muted); font-weight: 600; }
+
+    /* ── Conversation ── */
+    .topic-scroll {
+      display: flex; gap: 5px; overflow-x: auto;
+      padding-bottom: 2px; flex-shrink: 0;
+    }
+    .topic-scroll::-webkit-scrollbar { height: 0; }
+    .topic-btn {
+      border-radius: 16px; padding: 4px 11px; flex-shrink: 0;
+      font-size: 11px; font-weight: 800; white-space: nowrap;
+      border: 1px solid var(--border); background: var(--card);
+      color: var(--muted);
+    }
+    .topic-btn.active { background: rgba(255,107,107,0.28); border-color: var(--rose); color: var(--rose); }
+    .chat-bubble-app {
+      background: var(--cardl); border-radius: 13px 13px 13px 3px;
+      padding: 8px 11px; max-width: 230px;
+      border: 1px solid var(--border);
+    }
+    .chat-bubble-user {
+      background: linear-gradient(135deg, rgba(255,107,107,0.25), rgba(168,85,247,0.18));
+      border-radius: 13px 13px 3px 13px; padding: 8px 11px;
+      max-width: 220px; border: 1px solid rgba(255,107,107,0.33);
+    }
+    .chat-hint {
+      background: rgba(255,209,102,0.06); border-radius: 11px; padding: 10px;
+      border: 1px dashed rgba(255,209,102,0.44);
+    }
+
+    /* ── Map screen ── */
+    .city-btn {
+      border-radius: 18px; padding: 6px 12px;
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 11px; font-weight: 800; border: none;
+      transition: all 0.2s;
+    }
+    .city-btn.locked { opacity: 0.35; }
+    .unlock-row {
+      background: var(--card); border-radius: 11px; padding: 8px 12px;
+      border: 1px solid var(--border); display: flex;
+      align-items: center; gap: 9px; margin-bottom: 5px;
+    }
+
+    /* ── Admin screen ── */
+    .admin-tab-btn {
+      border-radius: 10px; padding: 4px 9px;
+      font-size: 10px; font-weight: 800;
+      background: var(--cardl); border: 1px solid var(--border);
+      color: var(--muted);
+    }
+    .admin-tab-btn.active {
+      background: rgba(168,85,247,0.28);
+      border-color: var(--purple); color: var(--purple);
+    }
+    .topic-cluster {
+      background: var(--card); border-radius: 16px;
+      border: 1px solid var(--border); overflow: hidden;
+      margin-bottom: 8px;
+    }
+    .topic-cluster.open { border-color: var(--purple); }
+    .topic-header {
+      width: 100%; background: none; border: none;
+      padding: 12px 13px; display: flex; align-items: center; gap: 10px;
+      text-align: left; cursor: pointer;
+    }
+    .topic-icon-box {
+      width: 38px; height: 38px; border-radius: 10px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 18px;
+    }
+    .sentence-row {
+      background: var(--cardd); border-radius: 10px;
+      border: 1px solid var(--border); margin-bottom: 6px;
+    }
+    .sentence-inner {
+      display: flex; align-items: flex-start; gap: 7px; padding: 9px 10px;
+    }
+    .s-badges { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 2px; }
+    .s-badge {
+      padding: 1px 5px; border-radius: 4px;
+      font-size: 8px; font-weight: 800;
+    }
+    .s-actions { display: flex; gap: 3px; flex-shrink: 0; }
+    .s-btn {
+      border: none; border-radius: 6px; padding: 4px 6px;
+      font-size: 11px; cursor: pointer;
+    }
+    .quota-bar {
+      background: var(--cardd); border-radius: 9px; padding: 7px 10px;
+      margin-bottom: 9px; display: flex; align-items: center; gap: 9px;
+    }
+    .add-btn {
+      width: 100%; border-radius: 11px; padding: 9px;
+      font-size: 11px; font-weight: 800;
+      display: flex; align-items: center; justify-content: center; gap: 5px;
+    }
+    .audio-prog-row { margin-bottom: 8px; }
+    .audio-prog-row .apr-header {
+      display: flex; justify-content: space-between; margin-bottom: 3px;
+    }
+    .export-card {
+      background: var(--card); border-radius: 16px; padding: 13px 14px;
+      border: 1px solid var(--border); margin-bottom: 10px;
+    }
+    .import-format {
+      background: var(--cardd); border-radius: 13px; padding: 11px 13px;
+      border: 1px solid var(--border); margin-bottom: 12px;
+    }
+  </style>
+</head>
+
+<body>
+<div id="app">
+
+  <!-- ══ ONBOARDING OVERLAY ══ -->
+  <div id="onboarding-overlay">
+    <div class="ob-progress"><div class="ob-fill" id="ob-fill"></div></div>
+    <!-- Step 0: Welcome -->
+    <div class="ob-screen ob-center active" id="ob-step-0">
+      <div style="font-size:72px;animation:float 2s ease-in-out infinite">🦋</div>
+      <div>
+        <div style="color:var(--purple);font-size:13px;font-weight:800;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">Willkommen bei</div>
+        <div style="color:var(--text);font-size:28px;font-weight:900;line-height:1.2">Bulgarisch<br/>Lern-App</div>
+      </div>
+      <div style="color:var(--muted);font-size:14px;line-height:1.7;max-width:280px">
+        Lerne Bulgarisch mit Sätzen, Gesprächen und Zahlen — auf dich persönlich zugeschnitten.
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <div style="width:48px;height:48px;border-radius:24px;background:rgba(168,85,247,0.22);border:1px solid rgba(168,85,247,0.44);display:flex;align-items:center;justify-content:center;font-size:22px">🇧🇬</div>
+        <div style="width:48px;height:48px;border-radius:24px;background:rgba(168,85,247,0.22);border:1px solid rgba(168,85,247,0.44);display:flex;align-items:center;justify-content:center;font-size:22px">📖</div>
+        <div style="width:48px;height:48px;border-radius:24px;background:rgba(168,85,247,0.22);border:1px solid rgba(168,85,247,0.44);display:flex;align-items:center;justify-content:center;font-size:22px">🎤</div>
+        <div style="width:48px;height:48px;border-radius:24px;background:rgba(168,85,247,0.22);border:1px solid rgba(168,85,247,0.44);display:flex;align-items:center;justify-content:center;font-size:22px">🔢</div>
+      </div>
+      <button onclick="obNext()" style="width:100%;background:linear-gradient(135deg,var(--rose),var(--purple));border:none;border-radius:20px;padding:16px;color:white;font-size:16px;font-weight:900;margin-top:8px;box-shadow:0 8px 32px rgba(168,85,247,0.44)">Los geht's! ✨</button>
+    </div>
+    <!-- Step 1: Name -->
+    <div class="ob-screen" id="ob-step-1">
+      <div style="text-align:center;padding-top:20px">
+        <div style="font-size:48px;margin-bottom:12px">👤</div>
+        <div style="color:var(--text);font-size:22px;font-weight:900">Wie heißt du?</div>
+        <div style="color:var(--muted);font-size:13px;margin-top:6px">Dein Name erscheint überall in der App.</div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:16px">
+        <input id="ob-name-input" type="text" maxlength="20" placeholder="Deinen Namen eingeben..."
+          oninput="obNameInput()"
+          style="width:100%;background:var(--cardd);border:2px solid var(--border);border-radius:16px;padding:16px 18px;color:var(--text);font-size:20px;font-weight:700;text-align:center;transition:border-color 0.3s"/>
+        <div id="ob-name-preview" style="text-align:center;display:none;animation:fadeIn 0.3s ease">
+          <span style="color:var(--muted);font-size:14px">Hallo, </span>
+          <span id="ob-name-show" style="color:var(--purple);font-size:18px;font-weight:900"></span>
+          <span style="color:var(--muted);font-size:14px"> 👋</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button onclick="obBack()" class="btn-secondary" style="flex:1;padding:14px">← Zurück</button>
+        <button id="ob-name-next" onclick="obNext()" disabled style="flex:2;background:var(--cardl);border:none;border-radius:16px;padding:14px;color:var(--muted);font-size:14px;font-weight:900">Weiter →</button>
+      </div>
+    </div>
+    <!-- Step 2: Emoji -->
+    <div class="ob-screen" id="ob-step-2">
+      <div style="text-align:center">
+        <div id="ob-emoji-preview" style="font-size:48px;margin-bottom:12px">❓</div>
+        <div style="color:var(--text);font-size:22px;font-weight:900">Wähle dein Emoji</div>
+        <div style="color:var(--muted);font-size:13px;margin-top:6px">Dein persönliches Symbol!</div>
+      </div>
+      <div style="flex:1;overflow-y:auto">
+        <div style="color:var(--muted);font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Tiere</div>
+        <div class="emoji-grid" style="margin-bottom:14px" id="emoji-animals"></div>
+        <div style="color:var(--muted);font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Natur &amp; Magie</div>
+        <div class="emoji-grid" style="margin-bottom:14px" id="emoji-nature"></div>
+        <div style="color:var(--muted);font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Spaß &amp; Hobbys</div>
+        <div class="emoji-grid" id="emoji-hobby"></div>
+      </div>
+      <div style="display:flex;gap:10px;flex-shrink:0">
+        <button onclick="obBack()" class="btn-secondary" style="flex:1;padding:14px">← Zurück</button>
+        <button id="ob-emoji-next" onclick="obNext()" disabled style="flex:2;background:var(--cardl);border:none;border-radius:16px;padding:14px;color:var(--muted);font-size:14px;font-weight:900">Weiter →</button>
+      </div>
+    </div>
+    <!-- Step 3: Colour -->
+    <div class="ob-screen" id="ob-step-3">
+      <div style="text-align:center">
+        <div id="ob-theme-preview-icon" style="font-size:48px;margin-bottom:12px">🎨</div>
+        <div style="color:var(--text);font-size:22px;font-weight:900">Wähle deine Farbe</div>
+        <div style="color:var(--muted);font-size:13px;margin-top:6px">Deine persönliche App-Farbe!</div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:10px" id="theme-btns"></div>
+      <div style="display:flex;gap:10px;flex-shrink:0">
+        <button onclick="obBack()" class="btn-secondary" style="flex:1;padding:14px">← Zurück</button>
+        <button id="ob-theme-next" onclick="obNext()" style="flex:2;border:none;border-radius:16px;padding:14px;color:white;font-size:14px;font-weight:900">Weiter →</button>
+      </div>
+    </div>
+    <!-- Step 4: Goal -->
+    <div class="ob-screen" id="ob-step-4">
+      <div style="text-align:center">
+        <div id="ob-goal-icon" style="font-size:48px;margin-bottom:12px">🎯</div>
+        <div style="color:var(--text);font-size:22px;font-weight:900">Dein Tagesziel</div>
+        <div style="color:var(--muted);font-size:13px;margin-top:6px">Wie viel möchtest du täglich lernen?</div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:10px" id="goal-btns"></div>
+      <div style="display:flex;gap:10px;flex-shrink:0">
+        <button onclick="obBack()" class="btn-secondary" style="flex:1;padding:14px">← Zurück</button>
+        <button id="ob-goal-next" onclick="obNext()" style="flex:2;border:none;border-radius:16px;padding:14px;color:white;font-size:14px;font-weight:900">Weiter →</button>
+      </div>
+    </div>
+    <!-- Step 5: Confirm -->
+    <div class="ob-screen" id="ob-step-5">
+      <div style="text-align:center;margin-bottom:8px">
+        <div style="color:var(--muted);font-size:12px;font-weight:700;margin-bottom:8px">ALLES BEREIT?</div>
+        <div style="color:var(--text);font-size:22px;font-weight:900">Dein Profil</div>
+      </div>
+      <div id="ob-confirm-card" class="profile-card-big" style="animation:pop 0.4s ease"></div>
+      <div style="color:var(--muted);font-size:12px;text-align:center;line-height:1.6">
+        Du kannst später weitere Profile hinzufügen — bis zu 4 Personen!
+      </div>
+      <div style="display:flex;gap:10px;margin-top:auto">
+        <button onclick="obBack()" class="btn-secondary" style="flex:1;padding:14px">← Zurück</button>
+        <button id="ob-confirm-btn" onclick="obConfirm()" style="flex:2;border:none;border-radius:16px;padding:14px;color:white;font-size:16px;font-weight:900"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ PROFILE SELECTOR OVERLAY ══ -->
+  <div id="profile-overlay">
+    <div style="padding:48px 24px 32px;flex:1;overflow-y:auto;display:flex;flex-direction:column">
+      <div style="text-align:center;margin-bottom:28px">
+        <div style="font-size:40px;margin-bottom:10px;animation:float 2s ease-in-out infinite">🦋</div>
+        <div style="color:var(--text);font-size:22px;font-weight:900">Wer lernt heute?</div>
+        <div style="color:var(--muted);font-size:13px;margin-top:6px">Wähle dein Profil</div>
+      </div>
+      <div id="profile-list"></div>
+    </div>
+  </div>
+
+
+  <!-- Status bar -->
+  <div id="statusbar">
+    <span class="time" id="clock">9:41</span>
+    <div class="pill"></div>
+    <span class="icons">●●● 🔋</span>
+  </div>
+
+  <!-- Screen container -->
+  <div id="screen-container">
+
+    <!-- ══════════ HOME ══════════ -->
+    <div class="screen active" id="screen-home">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding-top:8px;margin-bottom:12px">
+        <div>
+          <div style="color:var(--muted);font-size:12px;font-weight:700">Willkommen zurück</div>
+          <div style="color:var(--text);font-size:21px;font-weight:900"><span class="profile-greeting">Hallo!</span></div>
+        </div>
+        <button onclick="showGoodie()" style="width:44px;height:44px;border-radius:22px;background:linear-gradient(135deg,var(--rose),var(--purple));border:none;font-size:20px" class="anim-glow">🎁</button>
+      </div>
+
+      <!-- Level card -->
+      <div class="level-card" id="level-card" style="margin-bottom:10px">
+        <!-- filled by JS -->
+      </div>
+
+      <!-- Stats -->
+      <div class="stat-grid" id="stat-grid"><!-- filled by JS --></div>
+
+      <!-- Start button -->
+      <button class="btn-primary anim-glow" id="start-btn"
+        onclick="nav('learn')"
+        style="margin-bottom:12px">
+      </button>
+
+      <!-- SRS queue preview -->
+      <div class="card" style="margin-bottom:12px">
+        <div class="label">SRS Lernplan — Heute</div>
+        <div id="srs-preview"><!-- filled by JS --></div>
+        <div style="display:flex;gap:10px;margin-top:8px">
+          <div style="display:flex;align-items:center;gap:3px"><div class="phase-dot" style="background:var(--muted)"></div><span style="color:var(--muted);font-size:9px">Neu</span></div>
+          <div style="display:flex;align-items:center;gap:3px"><div class="phase-dot" style="background:var(--gold)"></div><span style="color:var(--muted);font-size:9px">Lernen</span></div>
+          <div style="display:flex;align-items:center;gap:3px"><div class="phase-dot" style="background:var(--purple)"></div><span style="color:var(--muted);font-size:9px">Übung</span></div>
+          <div style="display:flex;align-items:center;gap:3px"><div class="phase-dot" style="background:var(--teal)"></div><span style="color:var(--muted);font-size:9px">Gemeistert</span></div>
+        </div>
+      </div>
+
+      <!-- CEFR ladder -->
+      <div class="label" style="margin-bottom:7px">CEFR Lernpfad</div>
+      <div id="cefr-ladder"><!-- filled by JS --></div>
+    </div>
+
+    <!-- ══════════ LEARN ══════════ -->
+    <div class="screen" id="screen-learn" style="padding:0">
+      <div class="mode-toggle">
+        <button class="mode-btn active" id="mode-sentences" onclick="setLearnMode('sentences')">
+          <span>📖</span> Sätze
+        </button>
+        <button class="mode-btn" id="mode-numbers" onclick="setLearnMode('numbers')">
+          <span>🔢</span> Zahlen
+        </button>
+      </div>
+      <div id="learn-content" style="flex:1;overflow-y:auto;padding:12px 16px 16px;display:flex;flex-direction:column;gap:11px">
+        <!-- filled by JS -->
+      </div>
+    </div>
+
+    <!-- ══════════ CHAT ══════════ -->
+    <div class="screen" id="screen-chat">
+      <div style="color:var(--text);font-size:16px;font-weight:900;margin-bottom:8px;padding-top:8px">💬 Gespräch</div>
+      <div class="topic-scroll" id="topic-scroll" style="margin-bottom:10px"><!-- filled by JS --></div>
+      <div id="chat-messages" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:9px;padding-bottom:6px">
+        <!-- filled by JS -->
+      </div>
+      <div id="chat-user-prompt" style="display:none"><!-- filled by JS --></div>
+      <div id="chat-controls" style="display:none;padding-top:7px;border-top:1px solid var(--border)">
+        <!-- filled by JS -->
+      </div>
+    </div>
+
+    <!-- ══════════ MAP ══════════ -->
+    <div class="screen" id="screen-map">
+      <div style="padding-top:8px">
+        <div style="color:var(--text);font-size:16px;font-weight:900;margin-bottom:2px">🗺️ Bulgarien entdecken</div>
+        <div style="color:var(--muted);font-size:12px;margin-bottom:12px" id="map-subtitle">0 von 10 Städten frei</div>
+      </div>
+      <div class="card" style="margin-bottom:12px">
+        <div id="city-buttons" style="display:flex;flex-wrap:wrap;gap:7px;justify-content:center">
+          <!-- filled by JS -->
+        </div>
+        <div id="city-fact" style="display:none;margin-top:14px"><!-- filled by JS --></div>
+      </div>
+      <div class="label" style="margin-bottom:7px">Freischalt-Übersicht</div>
+      <div id="city-list"><!-- filled by JS --></div>
+    </div>
+
+    <!-- ══════════ ADMIN ══════════ -->
+    <div class="screen" id="screen-admin" style="padding:0">
+      <!-- Admin header -->
+      <div style="background:var(--card);border-bottom:1px solid var(--border);padding:10px 14px 8px;flex-shrink:0">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="color:var(--text);font-size:16px;font-weight:900">⚙️ Admin</div>
+            <span id="pin-status-badge" style="display:none"></span>
+          </div>
+          <div style="display:flex;gap:5px">
+            <button class="admin-tab-btn active" id="atab-sentences" onclick="setAdminTab('sentences')">Sätze</button>
+            <button class="admin-tab-btn" id="atab-export"    onclick="setAdminTab('export')">Export</button>
+            <button class="admin-tab-btn" id="atab-import"    onclick="setAdminTab('import')">Import</button>
+            <button onclick="openPinSetup()" style="background:rgba(255,209,102,0.18);border:1px solid rgba(255,209,102,0.44);border-radius:10px;padding:7px 10px;font-size:16px" title="PIN festlegen">🔐</button>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px" id="admin-stats"><!-- filled by JS --></div>
+      </div>
+      <!-- Admin tab content -->
+      <div id="admin-sentences" style="flex:1;overflow-y:auto;padding:8px 12px 0;display:flex;flex-direction:column"><!-- filled by JS --></div>
+      <div id="admin-export"    style="flex:1;overflow-y:auto;padding:12px 14px;display:none;flex-direction:column"><!-- filled by JS --></div>
+      <div id="admin-import"    style="flex:1;overflow-y:auto;padding:12px 14px;display:none;flex-direction:column"><!-- filled by JS --></div>
+    </div>
+
+  </div><!-- /screen-container -->
+
+  <!-- Bottom nav -->
+  <nav id="nav">
+    <button class="nav-btn active" id="nav-home" onclick="nav('home')">
+      <span class="nav-icon">🏠</span>
+      <span class="nav-label">Home</span>
+      <div class="nav-bar"></div>
+    </button>
+    <button class="nav-btn" id="nav-learn" onclick="nav('learn')">
+      <span class="nav-icon">📖</span>
+      <span class="nav-label">Lernen</span>
+      <div class="nav-bar"></div>
+    </button>
+    <button class="nav-btn" id="nav-chat" onclick="nav('chat')">
+      <span class="nav-icon">💬</span>
+      <span class="nav-label">Gespräch</span>
+      <div class="nav-bar"></div>
+    </button>
+    <button class="nav-btn" id="nav-map" onclick="nav('map')">
+      <span class="nav-icon">🗺️</span>
+      <span class="nav-label">Karte</span>
+      <div class="nav-bar"></div>
+    </button>
+    <button class="nav-btn" id="nav-admin" onclick="nav('admin')">
+      <span class="nav-icon">⚙️</span>
+      <span class="nav-label">Admin</span>
+      <div class="nav-bar"></div>
+    </button>
+  </nav>
+
+</div><!-- /app -->
+
+<!-- ── Goodie Modal ── -->
+<div id="goodie-modal" onclick="closeGoodie()">
+  <div class="gm-card anim-pop" onclick="event.stopPropagation()">
+    <div class="gm-dots" id="gm-dots"></div>
+    <div id="gm-icon" style="font-size:52px" class="anim-float"></div>
+    <div id="gm-title" style="font-size:17px;font-weight:900;margin-top:12px"></div>
+    <div id="gm-content" style="font-size:13px;line-height:1.65;margin-top:10px;color:var(--text)"></div>
+    <button onclick="closeGoodie()" id="gm-btn"
+      style="margin-top:20px;border:none;border-radius:16px;padding:12px 32px;color:white;font-size:14px;font-weight:900;width:100%">
+      Danke! 🎉
+    </button>
+  </div>
+</div>
+
+<!-- ── PIN Modal ── -->
+<div id="pin-modal" onclick="closePinModal()">
+  <div class="pm-card" onclick="event.stopPropagation()">
+    <div style="font-size:36px;margin-bottom:12px">🔐</div>
+    <div id="pm-title" style="color:var(--text);font-size:15px;font-weight:900;margin-bottom:6px"></div>
+    <div id="pm-error" style="color:var(--rose);font-size:12px;margin-bottom:8px;min-height:16px"></div>
+    <div class="pin-inputs" id="pin-inputs">
+      <input class="pin-input" type="password" inputmode="numeric" maxlength="1" id="pin0" oninput="pinInput(0)" />
+      <input class="pin-input" type="password" inputmode="numeric" maxlength="1" id="pin1" oninput="pinInput(1)" />
+      <input class="pin-input" type="password" inputmode="numeric" maxlength="1" id="pin2" oninput="pinInput(2)" />
+      <input class="pin-input" type="password" inputmode="numeric" maxlength="1" id="pin3" oninput="pinInput(3)" />
+    </div>
+    <button onclick="closePinModal()" class="btn-secondary" style="width:100%;margin-top:8px">Abbrechen</button>
+  </div>
+</div>
+
+<!-- ── Edit/Add Sheet ── -->
+<div id="edit-sheet" class="modal-sheet">
+  <div class="modal-handle"></div>
+  <div id="edit-title" style="color:var(--text);font-size:15px;font-weight:900;margin-bottom:12px"></div>
+  <div style="margin-bottom:10px">
+    <div class="label">🇩🇪 Deutsch *</div>
+    <textarea id="edit-de" rows="2" style="width:100%;background:var(--cardd);border:1px solid var(--border);border-radius:9px;padding:8px 10px;color:var(--text);font-size:12px;resize:none" placeholder="Deutschen Satz eingeben..."></textarea>
+  </div>
+  <div style="margin-bottom:10px">
+    <div class="label">🇬🇧 English</div>
+    <textarea id="edit-en" rows="2" style="width:100%;background:var(--cardd);border:1px solid var(--border);border-radius:9px;padding:8px 10px;color:var(--text);font-size:12px;resize:none" placeholder="English sentence (optional)..."></textarea>
+  </div>
+  <div style="margin-bottom:10px">
+    <div class="label">🇧🇬 Български *</div>
+    <textarea id="edit-bg" rows="2" style="width:100%;background:var(--cardd);border:1px solid var(--border);border-radius:9px;padding:8px 10px;color:var(--text);font-size:12px;resize:none" placeholder="Bulgarischen Satz eingeben..."></textarea>
+  </div>
+  <button onclick="previewTTS()" style="background:rgba(168,85,247,0.18);border:1px solid rgba(168,85,247,0.44);border-radius:8px;padding:6px 12px;color:var(--purple);font-size:11px;font-weight:800;margin-bottom:10px">
+    🔊 TTS Vorschau
+  </button>
+  <div style="display:flex;gap:8px">
+    <button onclick="closeEditSheet()" class="btn-secondary" style="flex:1">Abbrechen</button>
+    <button onclick="saveEdit()" id="save-edit-btn"
+      style="flex:2;background:linear-gradient(135deg,var(--teal),#00b894);border:none;border-radius:11px;padding:11px;color:white;font-size:12px;font-weight:900">
+      💾 Speichern
+    </button>
+  </div>
+</div>
+
+<!-- ── Toast ── -->
+<div id="toast"></div>
+
+<!-- ── Install Banner ── -->
+<div id="install-banner">
+  <div class="ib-text">
+    <div class="ib-title">App installieren</div>
+    <div class="ib-sub">Zum Startbildschirm hinzufügen</div>
+  </div>
+  <button id="install-btn">Installieren</button>
+  <button class="ib-close" onclick="document.getElementById('install-banner').classList.remove('show')">✕</button>
+</div>
+
+<!-- ── Hidden file inputs ── -->
+<input type="file" id="audio-file-input" accept="audio/*" style="display:none" onchange="handleAudioUpload()" />
+<input type="file" id="csv-file-input"   accept=".csv,.txt" style="display:none" onchange="handleCSVImport()" />
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// CONSTANTS & DATA
+// ═══════════════════════════════════════════════════════════════
+
+const DAY_MS = 86400000;
+const LEARN_REPS  = 20;
+const REVIEW_REPS = 5;
+const EXTRA_LIMIT = 20;
+let _nid = 2000;
+function newId(){ return ++_nid; }
+
+const INITIAL_TOPICS = [
+  { id:"begruessing", name:"Begrüßung", emoji:"👋", color:"#FF6B6B", sentences:[
+    {id:1, de:"Hallo, wie heißt du?",                            en:"Hello, what is your name?",                    bg:"Здравей, как се казваш?",                     origin:"original"},
+    {id:2, de:"Ich heiße Maria und ich bin dreizehn Jahre alt.", en:"My name is Maria and I am thirteen years old.", bg:"Казвам се Мария и съм на тринадесет години.", origin:"original"},
+    {id:3, de:"Guten Morgen, wie geht es dir?",                  en:"Good morning, how are you?",                   bg:"Добро утро, как си?",                          origin:"original"},
+    {id:4, de:"Mir geht es gut, danke. Und dir?",                en:"I am fine, thank you. And you?",               bg:"Добре съм, благодаря. А ти?",                  origin:"original"},
+    {id:5, de:"Auf Wiedersehen! Bis morgen!",                    en:"Goodbye! See you tomorrow!",                   bg:"Довиждане! До утре!",                          origin:"original"},
+  ]},
+  { id:"familie", name:"Familie", emoji:"👨‍👩‍👧", color:"#A855F7", sentences:[
+    {id:6,  de:"Meine Familie hat vier Personen.",    en:"My family has four people.",      bg:"Семейството ми има четирима души.", origin:"original"},
+    {id:7,  de:"Meine Mutter ist Lehrerin.",          en:"My mother is a teacher.",         bg:"Майка ми е учителка.",             origin:"original"},
+    {id:8,  de:"Mein Vater arbeitet in einer Firma.", en:"My father works in a company.",   bg:"Баща ми работи в една фирма.",     origin:"original"},
+    {id:9,  de:"Meine Großmutter kocht sehr gut.",    en:"My grandmother cooks very well.", bg:"Баба ми готви много добре.",       origin:"original"},
+    {id:10, de:"Ich habe eine ältere Schwester.",     en:"I have an older sister.",         bg:"Имам по-голяма сестра.",           origin:"original"},
+  ]},
+  { id:"schule", name:"Schule", emoji:"📚", color:"#06D6A0", sentences:[
+    {id:11, de:"Mein Lieblingsfach ist Mathematik.",        en:"My favourite subject is Mathematics.", bg:"Любимият ми предмет е математика.",   origin:"original"},
+    {id:12, de:"Ich habe mein Heft vergessen.",             en:"I forgot my notebook.",                bg:"Забравих тетрадката си.",              origin:"original"},
+    {id:13, de:"Wir haben heute eine Prüfung in Biologie.", en:"We have a Biology exam today.",        bg:"Днес имаме изпит по биология.",        origin:"original"},
+    {id:14, de:"Kannst du mir beim Lernen helfen?",         en:"Can you help me with studying?",       bg:"Можеш ли да ми помогнеш с ученето?",  origin:"original"},
+  ]},
+  { id:"essen", name:"Essen", emoji:"🍽️", color:"#FFD166", sentences:[
+    {id:15, de:"Zum Frühstück esse ich Joghurt mit Honig.",  en:"For breakfast I eat yoghurt with honey.",     bg:"За закуска ям кисело мляко с мед.",       origin:"original"},
+    {id:16, de:"Mein Lieblingsessen ist Pizza.",              en:"My favourite food is pizza.",                 bg:"Любимата ми храна е пица.",               origin:"original"},
+    {id:17, de:"Wir kaufen Obst und Gemüse auf dem Markt.",  en:"We buy fruit and vegetables at the market.", bg:"Купуваме плодове и зеленчуци на пазара.", origin:"original"},
+  ]},
+  { id:"gefuehle", name:"Gefühle", emoji:"💛", color:"#38BDF8", sentences:[
+    {id:18, de:"Ich bin heute sehr glücklich.",          en:"I am very happy today.",             bg:"Днес съм много щастлива.",            origin:"original"},
+    {id:19, de:"Manchmal bin ich müde nach der Schule.", en:"Sometimes I am tired after school.", bg:"Понякога съм уморена след училище.",  origin:"original"},
+    {id:20, de:"Ich vermisse meine Freundin sehr.",      en:"I miss my friend very much.",        bg:"Много ми липсва приятелката ми.",     origin:"original"},
+  ]},
+  { id:"freizeit", name:"Freizeit", emoji:"🎵", color:"#34D399", sentences:[
+    {id:21, de:"In meiner Freizeit lese ich gern Bücher.", en:"In my free time I like reading books.",       bg:"В свободното си време обичам да чета книги.", origin:"original"},
+    {id:22, de:"Ich spiele Gitarre seit drei Jahren.",     en:"I have been playing guitar for three years.", bg:"Свиря на китара от три години.",               origin:"original"},
+  ]},
+];
+
+const CITIES = [
+  {name:"Sofia",    emoji:"🏙️", unlockAt:0,  fact:"Sofia ist die älteste Hauptstadt Europas — über 7.000 Jahre Geschichte!"},
+  {name:"Plovdiv",  emoji:"🏛️", unlockAt:5,  fact:"Plovdiv war Europäische Kulturhauptstadt 2019!"},
+  {name:"Varna",    emoji:"🌊", unlockAt:8,  fact:"Varna hat den ältesten Goldschatz der Welt — über 6.000 Jahre alt!"},
+  {name:"Rila",     emoji:"⛪", unlockAt:11, fact:"Das Rila-Kloster ist UNESCO-Welterbe!"},
+  {name:"Nessebar", emoji:"🏝️", unlockAt:13, fact:"Nessebar: 3.000 Jahre alte Stadt auf einer Halbinsel!"},
+  {name:"Bansko",   emoji:"⛷️", unlockAt:15, fact:"Bansko ist Bulgariens berühmtester Skiort!"},
+  {name:"Turnovo",  emoji:"🏰", unlockAt:17, fact:"Tarnovo war die mittelalterliche Hauptstadt!"},
+  {name:"Burgas",   emoji:"🦢", unlockAt:18, fact:"Burgas: berühmt für Flamingos und Salzseen!"},
+  {name:"Kazanlak", emoji:"🌹", unlockAt:19, fact:"Kazanlak: 70% des weltweiten Rosenöls!"},
+  {name:"Sozopol",  emoji:"⚓", unlockAt:20, fact:"Sozopol: gegründet 610 v. Chr.!"},
+];
+
+const LEVELS = [
+  {cefr:"A1",  grade:"–",  gradeLabel:"Einstieg",     color:"#94A3B8", minCards:0,  desc:"Erste Schritte"},
+  {cefr:"A1+", grade:"4",  gradeLabel:"Ausreichend",  color:"#FB923C", minCards:5,  desc:"Grundlegende Ausdrücke"},
+  {cefr:"A2",  grade:"3",  gradeLabel:"Befriedigend", color:"#FACC15", minCards:10, desc:"Einfache Alltagsgespräche"},
+  {cefr:"A2+", grade:"2",  gradeLabel:"Gut",          color:"#4ADE80", minCards:14, desc:"Vertraute Themen"},
+  {cefr:"B1",  grade:"2+", gradeLabel:"Gut",          color:"#34D399", minCards:17, desc:"Hauptpunkte verstehen"},
+  {cefr:"B1+", grade:"1-", gradeLabel:"Sehr gut",     color:"#22D3EE", minCards:19, desc:"Fließend kommunizieren"},
+  {cefr:"B2",  grade:"1",  gradeLabel:"Sehr gut",     color:"#A78BFA", minCards:20, desc:"Komplexe Texte verstehen"},
+];
+
+const GOODIES = [
+  {icon:"🏛️", title:"Bulgarien-Wissen!", content:"Bulgarien hat das Kyrillische Alphabet der Welt geschenkt — erfunden von Kyrill und Method im 9. Jahrhundert! 📜", color:"#A855F7"},
+  {icon:"🌹", title:"Wusstest du das?",  content:"Bulgarien produziert über 70% des weltweiten Rosenöls! Das Rosental blüht jeden Mai. 🌸", color:"#FF6B6B"},
+  {icon:"🥛", title:"Food-Fakt!",        content:"Bulgarisches Joghurt enthält Lactobacillus bulgaricus — eine Bakterie, die nur in Bulgarien vorkommt! 🦠", color:"#06D6A0"},
+  {icon:"⭐", title:"Abzeichen!",         content:"Du hast eine neue Einheit gemeistert! Das ist echter Fortschritt!", color:"#FFD166"},
+  {icon:"🦋", title:"Iva sagt:",          content:"\"Чудесно! Das war fantastisch! Du klingst schon richtig bulgarisch! 💪\"", color:"#A855F7"},
+  {icon:"🌟", title:"Iva sagt:",          content:"\"Браво! In Bulgarien nickt man für NEIN und schüttelt für JA! 😄\"", color:"#06D6A0"},
+];
+
+const BG_NUMBERS = {
+  1:"един/една",2:"два/две",3:"три",4:"четири",5:"пет",6:"шест",7:"седем",8:"осем",9:"девет",10:"десет",
+  11:"единадесет",12:"дванадесет",13:"тринадесет",14:"четиринадесет",15:"петнадесет",
+  16:"шестнадесет",17:"седемнадесет",18:"осемнадесет",19:"деветнадесет",20:"двадесет",
+  30:"тридесет",40:"четиридесет",50:"петдесет",60:"шестдесет",70:"седемдесет",
+  80:"осемдесет",90:"деветдесет",100:"сто",200:"двеста",300:"триста",
+  400:"четиристотин",500:"петстотин",600:"шестотин",700:"седемстотин",
+  800:"осемстотин",900:"деветстотин",1000:"хиляда",
+};
+const NUM_GROUPS = [
+  {label:"1–10",   nums:[1,2,3,4,5,6,7,8,9,10]},
+  {label:"11–20",  nums:[11,12,13,14,15,16,17,18,19,20]},
+  {label:"Zehner", nums:[10,20,30,40,50,60,70,80,90,100]},
+  {label:"Hundert",nums:[100,200,300,400,500,600,700,800,900,1000]},
+  {label:"Zufall", nums:[]},
+];
+
+const CONVERSATIONS = {
+  "Begrüßung":[
+    {speaker:"app",  bg:"Здравей, как се казваш?",   de:"Hallo, wie heißt du?"},
+    {speaker:"user", prompt:"Sag deinen Namen:",       hint:"Казвам се ..."},
+    {speaker:"app",  bg:"Как си днес?",               de:"Wie geht es dir?"},
+    {speaker:"user", prompt:"Antworte:",               hint:"Добре съм, благодаря."},
+  ],
+  "Familie":[
+    {speaker:"app",  bg:"Имаш ли братя или сестри?", de:"Hast du Geschwister?"},
+    {speaker:"user", prompt:"Antworte auf Bulgarisch:",hint:"Имам по-голяма сестра."},
+    {speaker:"app",  bg:"Какво работи майка ти?",     de:"Was macht deine Mutter?"},
+    {speaker:"user", prompt:"Beschreibe:",             hint:"Майка ми е учителка."},
+  ],
+  "Schule":[
+    {speaker:"app",  bg:"Кой е любимият ти предмет?",de:"Was ist dein Lieblingsfach?"},
+    {speaker:"user", prompt:"Nenn dein Lieblingsfach:",hint:"Любимият ми предмет е математика."},
+    {speaker:"app",  bg:"Имаш ли домашна работа?",   de:"Hast du Hausaufgaben?"},
+    {speaker:"user", prompt:"Antworte:",              hint:"Да, имам много домашна работа."},
+  ],
+  "Essen":[
+    {speaker:"app",  bg:"Какво ядеш за закуска?",    de:"Was isst du zum Frühstück?"},
+    {speaker:"user", prompt:"Dein Frühstück:",        hint:"За закуска ям кисело мляко с мед."},
+    {speaker:"app",  bg:"Коя е любимата ти храна?",  de:"Was ist dein Lieblingsessen?"},
+    {speaker:"user", prompt:"Lieblingsessen:",        hint:"Любимата ми храна е пица."},
+  ],
+};
+
+// ═══════════════════════════════════════════════════════════════
+// STATE — all persisted to localStorage
+// ═══════════════════════════════════════════════════════════════
+
+const LS = {
+  save(key, val){ try{ localStorage.setItem('blapp_'+key, JSON.stringify(val)); }catch(e){} },
+  load(key, def){ try{ const v=localStorage.getItem('blapp_'+key); return v?JSON.parse(v):def; }catch(e){ return def; } },
+};
+
+let state = {
+  topics:    LS.load('topics', INITIAL_TOPICS),
+  deck:      LS.load('deck', {}),
+  audioMap:  LS.load('audioMap', {}),
+  adminPin:  LS.load('adminPin', null),
+  pinUnlocked: false,
+  streak:    LS.load('streak', { count:0, lastDate:null }),
+  screen:    'home',
+  learnMode: 'sentences',
+  adminTab:  'sentences',
+  // learn state
+  learnQueue: [],
+  learnQIdx:  0,
+  learnReps:  0,
+  learnPhase: 'listen', // listen|speak|result
+  learnShowBg: false,
+  learnTranscript: '',
+  // numbers state
+  numGroupIdx: 0,
+  numMode: 'listen', // listen|type|random
+  numCurrent: null,
+  numInput: '',
+  numResult: null,
+  numScore: {correct:0, total:0},
+  numStreak: 0,
+  numShowBg: false,
+  // chat state
+  chatTopic: 'Begrüßung',
+  chatStep:  0,
+  chatAnswered: [],
+  chatDone:  false,
+  chatShowHint: false,
+  // admin state
+  openTopicId: null,
+  editTarget:  null,
+  addToTopicId: null,
+  uploadTargetId: null,
+  importResult: null,
+  // pin state
+  pinMode: null,  // 'set'|'check'
+  pinStep: 'enter', // enter|confirm
+  pinFirstEntry: '',
+  pinCallback: null,
+};
+
+// Ensure all sentences have deck cards
+function syncDeck(){
+  let changed = false;
+  getAllSentences().forEach(s=>{
+    if(!state.deck[s.id]){ state.deck[s.id]=createCard(s.id); changed=true; }
+  });
+  if(changed) LS.save('deck', state.deck);
+}
+
+function getAllSentences(){
+  return state.topics.flatMap(t=>t.sentences.map(s=>({...s, unit:t.name})));
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SM-2
+// ═══════════════════════════════════════════════════════════════
+function createCard(id){
+  return {id, interval:0, easeFactor:2.5, repetitions:0, nextDue:Date.now(), phase:'new', lastReviewed:null};
+}
+function sm2Update(card, quality){
+  let {interval, easeFactor, repetitions} = card;
+  if(quality>=3){
+    if(repetitions===0) interval=1;
+    else if(repetitions===1) interval=6;
+    else interval=Math.round(interval*easeFactor);
+    repetitions+=1;
+  } else { repetitions=0; interval=1; }
+  easeFactor=Math.max(1.3,Math.min(2.5, easeFactor+0.1-(5-quality)*(0.08+(5-quality)*0.02)));
+  const nextDue=Date.now()+interval*DAY_MS;
+  let phase=card.phase==='new'?'learning':card.phase;
+  if(repetitions>=3&&interval>=7)  phase='review';
+  if(repetitions>=6&&interval>=21) phase='mastered';
+  return {...card, interval, easeFactor, repetitions, nextDue, phase, lastReviewed:Date.now()};
+}
+function isDue(card){ return Date.now()>=card.nextDue; }
+function formatDue(ms){
+  const d=ms-Date.now(); if(d<=0) return 'Jetzt';
+  const h=Math.floor(d/3600000); if(h<24) return h+'h';
+  return Math.floor(d/DAY_MS)+'d';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════════════
+function speak(text, rate=0.82){
+  if(!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text);
+  u.lang='bg-BG'; u.rate=rate;
+  window.speechSynthesis.speak(u);
+}
+
+function saveAll(){
+  LS.save('topics', state.topics);
+  LS.save('deck',   state.deck);
+  LS.save('audioMap', state.audioMap);
+  LS.save('adminPin', state.adminPin);
+  LS.save('streak',   state.streak);
+}
+
+function showToast(msg, dur=2000){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), dur);
+}
+
+function getDueCount(){
+  return Object.values(state.deck).filter(isDue).length;
+}
+function getMasteredCount(){
+  return Object.values(state.deck).filter(c=>c.phase==='mastered').length;
+}
+function getLevelFor(n){
+  let l=LEVELS[0]; for(const lv of LEVELS){if(n>=lv.minCards)l=lv;} return l;
+}
+function getNextLevel(n){
+  for(const lv of LEVELS){if(n<lv.minCards)return lv;} return null;
+}
+function updateStreakBadge(){
+  document.querySelectorAll('.nav-btn').forEach(b=>{
+    const existing=b.querySelector('.nav-badge');
+    if(existing) existing.remove();
+  });
+  const due=getDueCount();
+  if(due>0){
+    const btn=document.getElementById('nav-learn');
+    const badge=document.createElement('div');
+    badge.className='nav-badge';
+    badge.textContent=due>99?'99+':due;
+    btn.appendChild(badge);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════════════
+function nav(screenId){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('screen-'+screenId).classList.add('active');
+  document.getElementById('nav-'+screenId).classList.add('active');
+  state.screen=screenId;
+  updateStreakBadge();
+  if(screenId==='home')    renderHome();
+  if(screenId==='learn')   renderLearn();
+  if(screenId==='chat')    renderChat();
+  if(screenId==='map')     renderMap();
+  if(screenId==='admin')   renderAdmin();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// GOODIE
+// ═══════════════════════════════════════════════════════════════
+function showGoodie(){
+  const g=GOODIES[Math.floor(Math.random()*GOODIES.length)];
+  const colors=['#FF6B6B','#FFD166','#06D6A0','#A855F7','#38BDF8'];
+  document.getElementById('gm-dots').innerHTML=colors.map((c,i)=>
+    `<div class="gm-dot anim-float" style="background:${c};animation-delay:${i*0.18}s"></div>`
+  ).join('');
+  document.getElementById('gm-icon').textContent=g.icon;
+  document.getElementById('gm-title').style.color=g.color;
+  document.getElementById('gm-title').textContent=g.title;
+  document.getElementById('gm-content').textContent=g.content;
+  document.getElementById('gm-btn').style.background=g.color;
+  const card=document.querySelector('#goodie-modal .gm-card');
+  card.style.border=`2px solid ${g.color}44`;
+  card.style.boxShadow=`0 0 60px ${g.color}44`;
+  document.getElementById('goodie-modal').classList.add('open');
+}
+function closeGoodie(){
+  document.getElementById('goodie-modal').classList.remove('open');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PIN
+// ═══════════════════════════════════════════════════════════════
+function requirePin(callback){
+  if(state.pinUnlocked){ callback(); return; }
+  if(!state.adminPin){
+    openPinSetup(callback);
+  } else {
+    openPinCheck(callback);
+  }
+}
+function openPinSetup(callback){
+  state.pinMode='set'; state.pinStep='enter'; state.pinFirstEntry='';
+  state.pinCallback=callback||null;
+  document.getElementById('pm-title').textContent='Neue PIN festlegen (4 Ziffern)';
+  document.getElementById('pm-error').textContent='';
+  clearPinInputs();
+  document.getElementById('pin-modal').classList.add('open');
+  setTimeout(()=>document.getElementById('pin0').focus(), 100);
+}
+function openPinCheck(callback){
+  state.pinMode='check'; state.pinStep='check';
+  state.pinCallback=callback||null;
+  document.getElementById('pm-title').textContent='Admin-PIN eingeben';
+  document.getElementById('pm-error').textContent='';
+  clearPinInputs();
+  document.getElementById('pin-modal').classList.add('open');
+  setTimeout(()=>document.getElementById('pin0').focus(), 100);
+}
+function clearPinInputs(){
+  [0,1,2,3].forEach(i=>{
+    const el=document.getElementById('pin'+i);
+    el.value=''; el.classList.remove('filled');
+  });
+}
+function pinInput(idx){
+  const val=document.getElementById('pin'+idx).value.replace(/\D/,'');
+  document.getElementById('pin'+idx).value=val;
+  document.getElementById('pin'+idx).classList.toggle('filled',!!val);
+  if(val&&idx<3){ document.getElementById('pin'+(idx+1)).focus(); return; }
+  if(val&&idx===3){
+    const entered=[0,1,2,3].map(i=>document.getElementById('pin'+i).value).join('');
+    if(entered.length<4) return;
+    if(state.pinMode==='set'){
+      if(state.pinStep==='enter'){
+        state.pinFirstEntry=entered;
+        state.pinStep='confirm';
+        document.getElementById('pm-title').textContent='PIN bestätigen';
+        document.getElementById('pm-error').textContent='';
+        clearPinInputs();
+        setTimeout(()=>document.getElementById('pin0').focus(), 50);
+      } else {
+        if(entered===state.pinFirstEntry){
+          state.adminPin=entered;
+          state.pinUnlocked=true;
+          LS.save('adminPin', state.adminPin);
+          closePinModal();
+          updatePinBadge();
+          showToast('✅ PIN gesetzt!');
+          if(state.pinCallback){ state.pinCallback(); state.pinCallback=null; }
+        } else {
+          document.getElementById('pm-error').textContent='PINs stimmen nicht überein';
+          clearPinInputs();
+          state.pinStep='enter';
+          state.pinFirstEntry='';
+          document.getElementById('pm-title').textContent='Neue PIN festlegen (4 Ziffern)';
+          setTimeout(()=>document.getElementById('pin0').focus(), 50);
+        }
+      }
+    } else {
+      if(entered===state.adminPin){
+        state.pinUnlocked=true;
+        closePinModal();
+        updatePinBadge();
+        showToast('🔓 Entsperrt!');
+        if(state.pinCallback){ state.pinCallback(); state.pinCallback=null; }
+      } else {
+        document.getElementById('pm-error').textContent='Falsche PIN';
+        const inputs=document.getElementById('pin-inputs');
+        inputs.style.animation='shake 0.4s ease';
+        setTimeout(()=>inputs.style.animation='', 400);
+        clearPinInputs();
+        setTimeout(()=>document.getElementById('pin0').focus(), 50);
+      }
+    }
+  }
+}
+function closePinModal(){
+  document.getElementById('pin-modal').classList.remove('open');
+  state.pinCallback=null;
+}
+function updatePinBadge(){
+  const badge=document.getElementById('pin-status-badge');
+  if(state.pinUnlocked){
+    badge.style.display='inline-block';
+    badge.style.background='rgba(6,214,160,0.22)'; badge.style.color='#06D6A0';
+    badge.style.padding='2px 8px'; badge.style.borderRadius='8px';
+    badge.style.fontSize='9px'; badge.style.fontWeight='800';
+    badge.textContent='🔓 Entsperrt';
+  } else if(state.adminPin){
+    badge.style.display='inline-block';
+    badge.style.background='rgba(255,107,107,0.22)'; badge.style.color='#FF6B6B';
+    badge.style.padding='2px 8px'; badge.style.borderRadius='8px';
+    badge.style.fontSize='9px'; badge.style.fontWeight='800';
+    badge.textContent='🔒 Gesperrt';
+  } else {
+    badge.style.display='none';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HOME RENDER
+// ═══════════════════════════════════════════════════════════════
+function renderHome(){
+  const mastered=getMasteredCount();
+  const learning=Object.values(state.deck).filter(c=>c.phase==='learning'||c.phase==='review').length;
+  const due=getDueCount();
+  const level=getLevelFor(mastered);
+  const next=getNextLevel(mastered);
+  const prog=next?((mastered-level.minCards)/(next.minCards-level.minCards))*100:100;
+
+  // Level card
+  document.getElementById('level-card').style.borderColor=level.color+'44';
+  document.getElementById('level-card').innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:flex-start">
+      <div>
+        <div class="label">Dein Niveau</div>
+        <div style="display:flex;align-items:baseline;gap:8px;margin-top:3px">
+          <div style="color:${level.color};font-size:32px;font-weight:900">${level.cefr}</div>
+          <div style="color:var(--text);font-size:13px;font-weight:700">${level.de}</div>
+        </div>
+      </div>
+      <div style="background:${level.color}22;border:1px solid ${level.color}55;border-radius:12px;padding:6px 12px;text-align:center">
+        <div style="color:${level.color};font-size:18px;font-weight:900">Note ${level.grade}</div>
+        <div style="color:var(--muted);font-size:9px;font-weight:800">${level.gradeLabel.toUpperCase()}</div>
+      </div>
+    </div>
+    ${next?`
+    <div style="margin-top:10px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span style="color:var(--muted);font-size:11px">Ziel: <span style="color:${next.color};font-weight:800">${next.cefr}</span></span>
+        <span style="color:var(--text);font-size:11px;font-weight:700">${mastered}/${next.minCards}</span>
+      </div>
+      <div class="prog-track"><div class="prog-fill" style="width:${Math.min(100,prog)}%;background:linear-gradient(90deg,${level.color},${next.color})"></div></div>
+      <div style="color:var(--muted);font-size:11px;margin-top:3px">Noch <span style="color:var(--gold);font-weight:800">${next.minCards-mastered}</span> Sätze bis ${next.cefr}</div>
+    </div>`:''}
+  `;
+
+  // Stats
+  document.getElementById('stat-grid').innerHTML=[
+    {l:'Serie',      v:`${state.streak.count} 🔥`, c:'var(--gold)'},
+    {l:'Gemeistert', v:mastered,                   c:'var(--teal)'},
+    {l:'In Übung',   v:learning,                   c:'var(--purple)'},
+    {l:'Fällig',     v:due,                         c:due>0?'var(--rose)':'var(--muted)'},
+  ].map(s=>`<div class="stat-cell"><div class="stat-val" style="color:${s.c}">${s.v}</div><div class="stat-lbl">${s.l}</div></div>`).join('');
+
+  // Start button
+  const btn=document.getElementById('start-btn');
+  btn.style.background=due>0?'linear-gradient(135deg,#FF6B6B,#ff8e53)':'linear-gradient(135deg,#06D6A0,#00b894)';
+  btn.innerHTML=`<span style="font-size:20px">▶</span>${due>0?` ${due} Karten wiederholen`:' Neue Sätze lernen'}`;
+
+  // SRS preview
+  const sentences=getAllSentences().slice(0,5);
+  document.getElementById('srs-preview').innerHTML=sentences.map(s=>{
+    const card=state.deck[s.id]; if(!card) return '';
+    const phaseColors={new:'var(--muted)',learning:'var(--gold)',review:'var(--purple)',mastered:'var(--teal)'};
+    const pc=phaseColors[card.phase];
+    const d=isDue(card);
+    return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+      <div style="width:7px;height:7px;border-radius:4px;flex-shrink:0;background:${pc}"></div>
+      <div style="flex:1;color:var(--text);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.bg}</div>
+      <div style="font-size:10px;font-weight:700;color:${d?'var(--rose)':'var(--muted)'}">${card.phase==='new'?'Neu':formatDue(card.nextDue)}</div>
+    </div>`;
+  }).join('');
+
+  // CEFR ladder
+  document.getElementById('cefr-ladder').innerHTML=LEVELS.map(l=>{
+    const reached=mastered>=l.minCards;
+    const isCurrent=l.cefr===level.cefr;
+    return `<div class="cefr-row" style="background:${isCurrent?l.color+'15':'var(--card)'};border-color:${isCurrent?l.color+'55':'var(--border)'}">
+      <div class="cefr-circle" style="background:${reached?l.color+'28':'rgba(255,255,255,0.04)'};border-color:${reached?l.color:'var(--border)'};color:${reached?l.color:'var(--muted)'}">
+        ${reached?'✓':'○'}
+      </div>
+      <div style="flex:1">
+        <div style="display:flex;gap:6px;align-items:center">
+          <span style="color:${reached?l.color:'var(--muted)'};font-size:13px;font-weight:900">${l.cefr}</span>
+          <span style="color:${reached?'var(--text)':'var(--muted)'};font-size:11px;font-weight:700">Note ${l.grade} · ${l.gradeLabel}</span>
+        </div>
+        <div style="color:var(--muted);font-size:10px">${l.desc} · ab ${l.minCards} Sätzen</div>
+      </div>
+      ${isCurrent?`<div style="background:${l.color};border-radius:6px;padding:2px 7px;font-size:9px;font-weight:900;color:#000">DU</div>`:''}
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// LEARN MODE TOGGLE
+// ═══════════════════════════════════════════════════════════════
+function setLearnMode(mode){
+  state.learnMode=mode;
+  document.getElementById('mode-sentences').classList.toggle('active', mode==='sentences');
+  document.getElementById('mode-numbers').classList.toggle('active', mode==='numbers');
+  if(mode==='sentences') renderSentences();
+  else renderNumbers();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// LEARN — SENTENCES
+// ═══════════════════════════════════════════════════════════════
+function buildQueue(){
+  const all=getAllSentences();
+  return [
+    ...all.filter(s=>state.deck[s.id]&&state.deck[s.id].phase!=='new'&&isDue(state.deck[s.id])),
+    ...all.filter(s=>state.deck[s.id]&&state.deck[s.id].phase==='new'),
+  ];
+}
+
+function renderLearn(){
+  if(state.learnMode==='sentences') renderSentences();
+  else renderNumbers();
+}
+
+function renderSentences(){
+  const el=document.getElementById('learn-content');
+  state.learnQueue=buildQueue();
+  const current=state.learnQueue[state.learnQIdx%Math.max(1,state.learnQueue.length)];
+  const card=current?state.deck[current.id]:null;
+
+  if(!current||state.learnQueue.length===0){
+    el.innerHTML=`<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:32px;text-align:center">
+      <div style="font-size:52px">🎉</div>
+      <div style="color:var(--teal);font-size:18px;font-weight:900">Alle Karten erledigt!</div>
+      <div style="color:var(--muted);font-size:13px;line-height:1.6">Dein Gehirn festigt die Erinnerungen jetzt.<br>Komm morgen wieder! 🧠</div>
+      <button onclick="setLearnMode('numbers')" style="background:linear-gradient(135deg,var(--purple),#6366f1);border:none;border-radius:14px;padding:12px 24px;color:white;font-size:13px;font-weight:900">🔢 Zahlen üben →</button>
+    </div>`;
+    return;
+  }
+
+  const isNew=card.phase==='new';
+  const repsTarget=isNew?LEARN_REPS:REVIEW_REPS;
+  const phaseLabel={new:'Neu',learning:'Lernen',review:'Wiederholung',mastered:'Gemeistert'}[card.phase]||'Neu';
+
+  // Dots
+  const dots=(count)=>Array.from({length:count}).map((_,i)=>`<div class="dot" id="dot-${i}" style="background:${i<state.learnReps?(i<10?'var(--gold)':'var(--teal)'):'rgba(255,255,255,0.1)'}"></div>`).join('');
+  const dotsHtml=isNew
+    ?`<div class="dots-row" style="margin-bottom:3px">${dots(10)}</div><div class="dots-row">${Array.from({length:10}).map((_,i)=>`<div class="dot" style="background:${(i+10)<state.learnReps?'var(--teal)':'rgba(255,255,255,0.1)'}"></div>`).join('')}</div>`
+    :`<div class="dots-row">${Array.from({length:repsTarget}).map((_,i)=>`<div class="dot" style="background:${i<state.learnReps?'var(--purple)':'rgba(255,255,255,0.1)'}"></div>`).join('')}</div>`;
+
+  // Action area
+  let actionHtml='';
+  if(state.learnPhase==='listen'){
+    actionHtml=`<button onclick="learnPlay()" style="background:linear-gradient(135deg,var(--purple),#6366f1);border:none;border-radius:16px;padding:14px;color:white;font-size:14px;font-weight:900;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 8px 24px rgba(168,85,247,0.44)">
+      <span style="font-size:22px">🔊</span>${state.learnReps===0?'Anhören':state.learnReps>=repsTarget?'Noch einmal':`Nochmal (${state.learnReps}/${repsTarget})`}
+    </button>`;
+  } else if(state.learnPhase==='speak'){
+    actionHtml=`
+      <div style="background:rgba(255,107,107,0.15);border-radius:11px;padding:10px;border:1px solid rgba(255,107,107,0.33);text-align:center;color:var(--text);font-size:13px;font-weight:700">🎤 Sprich den Satz jetzt auf Bulgarisch!</div>
+      ${state.learnTranscript?`<div style="background:rgba(56,189,248,0.12);border-radius:9px;padding:7px 11px;border:1px solid rgba(56,189,248,0.33);color:var(--blue);font-size:12px;font-style:italic">🎤 Erkannt: „${state.learnTranscript}"</div>`:''}
+      <div style="display:flex;gap:8px">
+        <button onclick="speak('${current.bg.replace(/'/g,"\\'")}', 0.82)" style="background:var(--cardl);border:1px solid var(--border);border-radius:11px;padding:11px 13px;color:var(--muted);font-size:16px">🔊</button>
+        <button id="record-btn" onclick="learnRecord()" style="flex:1;border:none;border-radius:11px;padding:12px;background:linear-gradient(135deg,var(--teal),#00b894);color:white;font-size:14px;font-weight:900;display:flex;align-items:center;justify-content:center;gap:8px">
+          <span style="font-size:20px">🎤</span>Sprechen
+        </button>
+      </div>`;
+  } else if(state.learnPhase==='result'){
+    const nextInterval=Math.round((card.interval||1)*(card.easeFactor||2.5));
+    actionHtml=`
+      ${state.learnTranscript?`<div style="background:rgba(56,189,248,0.12);border-radius:9px;padding:7px 11px;border:1px solid rgba(56,189,248,0.33);color:var(--blue);font-size:12px">🎤 Erkannt: „${state.learnTranscript}"</div>`:''}
+      <div style="color:var(--muted);font-size:10px;font-weight:800;letter-spacing:1px;text-align:center">WIE WAR DAS? — BEWERTE DICH SELBST</div>
+      <div class="rating-row">
+        <button class="rating-btn" onclick="learnRate(2)" style="background:rgba(255,107,107,0.22);border:1px solid rgba(255,107,107,0.55);color:var(--rose)">
+          <span class="rb-icon">🔁</span>Schwer 😅<span class="rb-note">Morgen nochmal</span>
+        </button>
+        <button class="rating-btn" onclick="learnRate(4)" style="background:rgba(255,209,102,0.22);border:1px solid rgba(255,209,102,0.55);color:var(--gold)">
+          <span class="rb-icon">👍</span>Gut 😊<span class="rb-note">+${nextInterval}d</span>
+        </button>
+        <button class="rating-btn" onclick="learnRate(5)" style="background:rgba(6,214,160,0.22);border:1px solid rgba(6,214,160,0.55);color:var(--teal)">
+          <span class="rb-icon">⭐</span>Perfekt 🌟<span class="rb-note">+${Math.round(nextInterval*1.2)}d</span>
+        </button>
+      </div>`;
+  }
+
+  el.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div style="color:var(--text);font-size:16px;font-weight:900">Sätze lernen</div>
+      <div style="display:flex;gap:5px">
+        <span class="chip" style="background:rgba(255,209,102,0.22);color:var(--gold)">${current.unit}</span>
+        <span class="chip" style="background:${isNew?'rgba(255,107,107,0.22)':'rgba(168,85,247,0.22)'};color:${isNew?'var(--rose)':'var(--purple)'}">${phaseLabel}</span>
+      </div>
+    </div>
+    <div class="srs-strip">
+      <div class="srs-item"><div class="srs-k">Intervall</div><div class="srs-v">${card.interval===0?'Neu':card.interval+'d'}</div></div>
+      <div class="srs-item"><div class="srs-k">Leichtigkeit</div><div class="srs-v">${card.easeFactor.toFixed(1)}</div></div>
+      <div class="srs-item"><div class="srs-k">Richtig</div><div class="srs-v">${card.repetitions}×</div></div>
+    </div>
+    <div class="card">
+      <div style="margin-bottom:9px">
+        <div class="label">🇩🇪 Deutsch</div>
+        <div style="color:var(--text);font-size:15px;font-weight:700;line-height:1.4">${current.de}</div>
+      </div>
+      <div style="margin-bottom:11px">
+        <div class="label">🇬🇧 English</div>
+        <div style="color:rgba(240,236,255,0.46);font-size:12px;line-height:1.4">${current.en}</div>
+      </div>
+      <div style="background:${state.learnShowBg?'rgba(168,85,247,0.15)':'rgba(255,255,255,0.03)'};border-radius:11px;padding:10px 12px;border:1px solid ${state.learnShowBg?'rgba(168,85,247,0.44)':'var(--border)'};transition:all 0.4s">
+        <div class="label">🇧🇬 Български</div>
+        <div style="color:${state.learnShowBg?'var(--text)':'transparent'};text-shadow:${state.learnShowBg?'none':'0 0 12px var(--text)'};font-size:17px;font-weight:700;transition:all 0.45s">${current.bg}</div>
+      </div>
+    </div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px">
+        <div class="label">${isNew?'Erste Begegnung — 20 Wiederholungen':'Wiederholung — '+repsTarget+'× Anhören'}</div>
+        <div style="color:${state.learnReps>=repsTarget?'var(--teal)':'var(--gold)'};font-size:12px;font-weight:900">${state.learnReps}/${repsTarget}${state.learnReps>=repsTarget?' ✓':''}</div>
+      </div>
+      ${dotsHtml}
+      <div style="color:var(--muted);font-size:10px;margin-top:5px">${state.learnReps<repsTarget?`Noch ${repsTarget-state.learnReps}× anhören`:'🎯 Bereit — jetzt nachsprechen!'}</div>
+    </div>
+    ${actionHtml}
+  `;
+}
+
+function learnPlay(){
+  const current=state.learnQueue[state.learnQIdx%Math.max(1,state.learnQueue.length)];
+  if(!current) return;
+  speak(current.bg);
+  state.learnShowBg=true;
+  state.learnReps++;
+  const isNew=state.deck[current.id]?.phase==='new';
+  const repsTarget=isNew?LEARN_REPS:REVIEW_REPS;
+  if(state.learnReps>=repsTarget) setTimeout(()=>{ state.learnPhase='speak'; renderSentences(); },900);
+  else renderSentences();
+}
+
+function learnRecord(){
+  const btn=document.getElementById('record-btn');
+  if(!btn) return;
+  btn.style.background='linear-gradient(135deg,#FF6B6B,#ff4757)';
+  btn.innerHTML='<span style="font-size:20px">⏹</span>Zuhören...';
+  btn.classList.add('anim-pulse');
+  state.learnTranscript='';
+
+  const SRE=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(SRE){
+    try{
+      const r=new SRE(); r.lang='bg-BG'; r.interimResults=false; r.maxAlternatives=1;
+      r.onresult=e=>{ state.learnTranscript=e.results[0][0].transcript; };
+      r.onerror=()=>{ state.learnPhase='result'; renderSentences(); };
+      r.onend=()=>{ state.learnPhase='result'; renderSentences(); };
+      r.start();
+      return;
+    }catch(e){}
+  }
+  // Fallback: simulate after 2s
+  setTimeout(()=>{ state.learnPhase='result'; renderSentences(); }, 2400);
+}
+
+function learnRate(quality){
+  const current=state.learnQueue[state.learnQIdx%Math.max(1,state.learnQueue.length)];
+  if(!current) return;
+  state.deck[current.id]=sm2Update(state.deck[current.id], quality);
+  LS.save('deck', state.deck);
+  if(quality>=4&&Math.random()>0.55) showGoodie();
+  state.learnQIdx++;
+  state.learnReps=0;
+  state.learnPhase='listen';
+  state.learnShowBg=false;
+  state.learnTranscript='';
+  updateStreakBadge();
+  renderSentences();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// LEARN — NUMBERS
+// ═══════════════════════════════════════════════════════════════
+function renderNumbers(){
+  const el=document.getElementById('learn-content');
+  const group=NUM_GROUPS[state.numGroupIdx];
+  if(state.numCurrent===null) pickNumber();
+
+  const numKeys=Object.keys(BG_NUMBERS).map(Number);
+  const accuracy=state.numScore.total>0?Math.round(state.numScore.correct/state.numScore.total*100):0;
+  const bgWord=state.numCurrent!==null?BG_NUMBERS[state.numCurrent]:'';
+
+  const groupBtns=NUM_GROUPS.map((g,i)=>`
+    <button onclick="setNumGroup(${i})" class="${state.numGroupIdx===i?'active':''}" style="
+      background:${state.numGroupIdx===i?'rgba(168,85,247,0.28)':'var(--card)'};
+      border:1px solid ${state.numGroupIdx===i?'var(--purple)':'var(--border)'};
+      border-radius:14px;padding:5px 11px;flex-shrink:0;
+      color:${state.numGroupIdx===i?'var(--purple)':'var(--muted)'};font-size:11px;font-weight:800">${g.label}</button>
+  `).join('');
+
+  const modeBtns=['listen','type','random'].map((m,idx)=>{
+    const icons=['🔊','⌨️','🎲']; const labels=['Hören & Sehen','Zahl tippen','Zufalls-Quiz'];
+    return `<button onclick="setNumMode('${m}')" style="flex:1;background:${state.numMode===m?'rgba(255,107,107,0.22)':'var(--card)'};border:1px solid ${state.numMode===m?'var(--rose)':'var(--border)'};border-radius:12px;padding:8px 4px;color:${state.numMode===m?'var(--rose)':'var(--muted)'};font-size:10px;font-weight:800;display:flex;flex-direction:column;align-items:center;gap:3px">
+      <span style="font-size:16px">${icons[idx]}</span>${labels[idx]}
+    </button>`;
+  }).join('');
+
+  let actionHtml='';
+  if(state.numMode==='listen'){
+    actionHtml=`
+      <button onclick="numListen()" style="background:linear-gradient(135deg,var(--purple),#6366f1);border:none;border-radius:16px;padding:14px;color:white;font-size:14px;font-weight:900;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 8px 24px rgba(168,85,247,0.44)">
+        <span style="font-size:22px">🔊</span> Anhören & Zeigen
+      </button>
+      <button onclick="pickNumber();renderNumbers()" class="btn-secondary" style="width:100%;padding:12px">Nächste Zahl →</button>`;
+  } else if(state.numMode==='type'){
+    actionHtml=`
+      <div style="color:var(--muted);font-size:12px;text-align:center">Höre den bulgarischen Begriff und tippe die Zahl:</div>
+      <button onclick="speak('${bgWord}')" style="background:rgba(168,85,247,0.22);border:1px solid rgba(168,85,247,0.44);border-radius:12px;padding:10px;color:var(--purple);font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;gap:6px">
+        <span style="font-size:18px">🔊</span> Begriff anhören
+      </button>
+      <div style="display:flex;gap:8px">
+        <input id="num-input" type="number" value="${state.numInput}" oninput="state.numInput=this.value" onkeydown="if(event.key==='Enter')numCheck()"
+          placeholder="Zahl eingeben..."
+          style="flex:1;background:var(--cardd);border:2px solid ${state.numResult==='wrong'?'var(--rose)':state.numResult==='correct'?'var(--teal)':'var(--border)'};border-radius:12px;padding:12px;color:var(--text);font-size:18px;font-weight:900;text-align:center"/>
+        <button onclick="numCheck()" style="background:linear-gradient(135deg,var(--teal),#00b894);border:none;border-radius:12px;padding:12px 16px;color:white;font-size:13px;font-weight:900">✓</button>
+      </div>
+      ${state.numResult?`<div style="background:${state.numResult==='correct'?'rgba(6,214,160,0.18)':'rgba(255,107,107,0.18)'};border-radius:12px;padding:10px;border:1px solid ${state.numResult==='correct'?'rgba(6,214,160,0.44)':'rgba(255,107,107,0.44)'};text-align:center" class="anim-pop">
+        <span style="font-size:28px">${state.numResult==='correct'?'✅':'❌'}</span>
+        <div style="color:${state.numResult==='correct'?'var(--teal)':'var(--rose)'};font-size:13px;font-weight:800;margin-top:4px">
+          ${state.numResult==='correct'?'Richtig! 🎉':`Falsch — die Antwort war: ${state.numCurrent}`}
+        </div>
+        <button onclick="pickNumber();state.numResult=null;state.numInput='';renderNumbers()" style="margin-top:8px;background:none;border:1px solid var(--border);border-radius:9px;padding:6px 16px;color:var(--muted);font-size:12px">Weiter →</button>
+      </div>`:''}`;
+  } else if(state.numMode==='random'){
+    const wrong=numWrongOptions(state.numCurrent,3);
+    const options=[state.numCurrent,...wrong].sort(()=>Math.random()-0.5);
+    actionHtml=`
+      <div style="color:var(--muted);font-size:12px;text-align:center">Höre das Wort — welche Zahl ist es?</div>
+      <button onclick="speak('${bgWord}')" style="background:linear-gradient(135deg,var(--rose),#ff8e53);border:none;border-radius:16px;padding:14px;color:white;font-size:14px;font-weight:900;display:flex;align-items:center;justify-content:center;gap:10px">
+        <span style="font-size:22px">🔊</span> Begriff anhören
+      </button>
+      <div style="display:flex;flex-wrap:wrap;gap:7px">
+        ${options.map(n=>`<button onclick="numGuess(${n})" style="flex:1 1 40%;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px;color:var(--text);font-size:18px;font-weight:900;text-align:center">${n}</button>`).join('')}
+      </div>
+      ${state.numResult?`<div style="background:${state.numResult==='correct'?'rgba(6,214,160,0.18)':'rgba(255,107,107,0.18)'};border-radius:12px;padding:10px;border:1px solid ${state.numResult==='correct'?'rgba(6,214,160,0.44)':'rgba(255,107,107,0.44)'};text-align:center" class="anim-pop">
+        <span style="font-size:22px">${state.numResult==='correct'?'✅':'❌'}</span>
+        <span style="color:${state.numResult==='correct'?'var(--teal)':'var(--rose)'};font-size:13px;font-weight:800;margin-left:8px">
+          ${state.numResult==='correct'?'Richtig!':` Falsch — es war ${state.numCurrent}`}
+        </span>
+      </div>`:''}`;
+  }
+
+  const refBtns=Object.entries(BG_NUMBERS).slice(0,20).map(([num,word])=>
+    `<button onclick="speak('${word}')" style="background:var(--cardd);border:1px solid var(--border);border-radius:8px;padding:4px 8px;display:flex;flex-direction:column;align-items:center;gap:1px">
+      <span style="color:var(--gold);font-size:12px;font-weight:900">${num}</span>
+      <span style="color:var(--purple);font-size:9px;font-weight:700">${word.split('/')[0]}</span>
+    </button>`
+  ).join('');
+
+  el.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div style="color:var(--text);font-size:16px;font-weight:900">🔢 Zahlen auf Bulgarisch</div>
+      <div style="display:flex;gap:6px">
+        <span class="chip" style="background:rgba(255,209,102,0.22);color:var(--gold)">🔥 ${state.numStreak}</span>
+        <span class="chip" style="background:rgba(6,214,160,0.22);color:var(--teal)">${state.numScore.correct}/${state.numScore.total}</span>
+      </div>
+    </div>
+    <div style="display:flex;gap:5px;overflow-x:auto;padding-bottom:2px">${groupBtns}</div>
+    <div style="display:flex;gap:7px">${modeBtns}</div>
+    <div class="card" style="display:flex;flex-direction:column;gap:14px;align-items:center">
+      <div style="color:var(--gold);font-size:64px;font-weight:900;line-height:1">${state.numCurrent}</div>
+      <div style="background:${state.numShowBg||state.numMode==='random'?'rgba(168,85,247,0.18)':'rgba(255,255,255,0.04)'};border-radius:14px;padding:12px 20px;width:100%;text-align:center;border:1px solid ${state.numShowBg||state.numMode==='random'?'rgba(168,85,247,0.44)':'var(--border)'};transition:all 0.4s">
+        <div class="label">🇧🇬 Български</div>
+        <div style="color:${state.numShowBg||state.numMode==='random'?'var(--text)':'transparent'};text-shadow:${state.numShowBg||state.numMode==='random'?'none':'0 0 14px var(--text)'};font-size:20px;font-weight:700;transition:all 0.4s">${bgWord}</div>
+      </div>
+      ${state.numScore.total>0?`<div style="width:100%">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+          <span style="color:var(--muted);font-size:10px">Genauigkeit</span>
+          <span style="color:${accuracy>=80?'var(--teal)':accuracy>=50?'var(--gold)':'var(--rose)'};font-size:10px;font-weight:800">${accuracy}%</span>
+        </div>
+        <div class="prog-track"><div class="prog-fill" style="width:${accuracy}%;background:${accuracy>=80?'var(--teal)':accuracy>=50?'var(--gold)':'var(--rose)'}"></div></div>
+      </div>`:''}
+    </div>
+    ${actionHtml}
+    <div class="card">
+      <div class="label" style="margin-bottom:8px">Zahlen-Referenz</div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px">${refBtns}</div>
+    </div>
+  `;
+}
+
+function pickNumber(){
+  const group=NUM_GROUPS[state.numGroupIdx];
+  let num;
+  if(group.label==='Zufall'){ const k=Object.keys(BG_NUMBERS).map(Number); num=k[Math.floor(Math.random()*k.length)]; }
+  else { num=group.nums[Math.floor(Math.random()*group.nums.length)]; }
+  state.numCurrent=num; state.numShowBg=false; state.numResult=null; state.numInput='';
+}
+function setNumGroup(i){ state.numGroupIdx=i; pickNumber(); renderNumbers(); }
+function setNumMode(m){ state.numMode=m; pickNumber(); renderNumbers(); }
+function numListen(){ speak(BG_NUMBERS[state.numCurrent]); state.numShowBg=true; renderNumbers(); }
+function numCheck(){
+  const n=parseInt(state.numInput,10);
+  const ok=n===state.numCurrent;
+  state.numResult=ok?'correct':'wrong';
+  state.numScore={correct:state.numScore.correct+(ok?1:0),total:state.numScore.total+1};
+  state.numStreak=ok?state.numStreak+1:0;
+  renderNumbers();
+}
+function numGuess(n){
+  const ok=n===state.numCurrent;
+  state.numResult=ok?'correct':'wrong';
+  state.numScore={correct:state.numScore.correct+(ok?1:0),total:state.numScore.total+1};
+  state.numStreak=ok?state.numStreak+1:0;
+  renderNumbers();
+  setTimeout(()=>{ pickNumber(); state.numResult=null; renderNumbers(); },900);
+}
+function numWrongOptions(correct,count){
+  const all=Object.keys(BG_NUMBERS).map(Number).filter(n=>n!==correct);
+  return all.sort(()=>Math.random()-0.5).slice(0,count);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CHAT RENDER
+// ═══════════════════════════════════════════════════════════════
+function renderChat(){
+  const topicKeys=Object.keys(CONVERSATIONS);
+
+  // Topic scroll
+  document.getElementById('topic-scroll').innerHTML=topicKeys.map(t=>
+    `<button class="topic-btn ${t===state.chatTopic?'active':''}" onclick="setChatTopic('${t}')">${t}</button>`
+  ).join('');
+
+  renderChatMessages();
+}
+
+function setChatTopic(t){
+  state.chatTopic=t; state.chatStep=0; state.chatAnswered=[];
+  state.chatDone=false; state.chatShowHint=false;
+  renderChat();
+  const conv=CONVERSATIONS[t];
+  if(conv[0]?.speaker==='app') setTimeout(()=>speak(conv[0].bg),350);
+}
+
+function renderChatMessages(){
+  const conv=CONVERSATIONS[state.chatTopic];
+  const current=conv[state.chatStep];
+  const msgEl=document.getElementById('chat-messages');
+  const promptEl=document.getElementById('chat-user-prompt');
+  const ctrlEl=document.getElementById('chat-controls');
+
+  let html='';
+  conv.forEach((msg,i)=>{
+    if(msg.speaker==='app'&&i<=state.chatStep){
+      html+=`<div style="display:flex;gap:8px;align-items:flex-end" class="anim-fade">
+        <div style="width:32px;height:32px;border-radius:16px;flex-shrink:0;background:linear-gradient(135deg,var(--purple),var(--rose));display:flex;align-items:center;justify-content:center;font-size:15px">🦋</div>
+        <div>
+          <div class="chat-bubble-app">
+            <div style="color:var(--text);font-size:14px;font-weight:700">${msg.bg}</div>
+            <div style="color:var(--muted);font-size:11px;margin-top:2px">${msg.de}</div>
+          </div>
+          <button onclick="speak('${msg.bg.replace(/'/g,"\\'")}',0.82)" style="background:none;border:none;color:var(--purple);font-size:10px;font-weight:700;margin-top:2px;margin-left:3px;cursor:pointer">🔊</button>
+        </div>
+      </div>`;
+    }
+    const ua=state.chatAnswered.find(a=>a.step===i);
+    if(msg.speaker==='user'&&ua){
+      html+=`<div style="display:flex;justify-content:flex-end" class="anim-fade">
+        <div class="chat-bubble-user">
+          <div style="color:var(--text);font-size:13px;font-weight:700">${ua.text}</div>
+        </div>
+      </div>`;
+    }
+  });
+  msgEl.innerHTML=html;
+  msgEl.scrollTop=msgEl.scrollHeight;
+
+  if(!state.chatDone&&current?.speaker==='user'){
+    promptEl.style.display='block';
+    promptEl.innerHTML=`<div class="chat-hint">
+      <div style="color:var(--gold);font-size:10px;font-weight:800;letter-spacing:1px">DEINE ANTWORT</div>
+      <div style="color:var(--text);font-size:12px;margin-top:3px">${current.prompt}</div>
+      ${state.chatShowHint?`<div style="color:var(--muted);font-size:12px;margin-top:5px;font-style:italic;background:rgba(255,255,255,0.05);border-radius:7px;padding:5px 8px">💡 ${current.hint}</div>`:''}
+    </div>`;
+    ctrlEl.style.display='flex'; ctrlEl.style.gap='7px';
+    ctrlEl.innerHTML=`
+      <button onclick="state.chatShowHint=!state.chatShowHint;renderChatMessages()" style="background:var(--cardl);border:1px solid var(--border);border-radius:11px;padding:9px 12px;color:var(--muted);font-size:14px">💡</button>
+      <button onclick="chatRecord()" id="chat-record-btn" style="flex:1;border:none;border-radius:11px;padding:11px;background:linear-gradient(135deg,var(--teal),#00b894);color:white;font-size:14px;font-weight:900;display:flex;align-items:center;justify-content:center;gap:7px">
+        <span style="font-size:19px">🎤</span>Sprechen
+      </button>`;
+  } else if(state.chatDone){
+    promptEl.style.display='none';
+    ctrlEl.style.display='none';
+    msgEl.innerHTML+=`<div class="card" style="text-align:center;background:rgba(6,214,160,0.15);border-color:rgba(6,214,160,0.44)" class="anim-pop">
+      <div style="font-size:36px">🎉</div>
+      <div style="color:var(--teal);font-size:14px;font-weight:900;margin-top:6px">Gespräch abgeschlossen!</div>
+      <div style="color:var(--muted);font-size:12px;margin-top:2px">+50 XP · Sehr gut! 🌟</div>
+      <button onclick="setChatTopic(state.chatTopic)" style="background:var(--teal);border:none;border-radius:10px;padding:8px 20px;color:var(--bg);font-size:12px;font-weight:900;margin-top:9px">Nochmal üben 🔄</button>
+    </div>`;
+    msgEl.scrollTop=msgEl.scrollHeight;
+  } else {
+    promptEl.style.display='none';
+    ctrlEl.style.display='none';
+  }
+}
+
+function chatRecord(){
+  const btn=document.getElementById('chat-record-btn');
+  if(btn){ btn.style.background='linear-gradient(135deg,#FF6B6B,#ff4757)'; btn.innerHTML='<span style="font-size:19px">⏹</span>Zuhören...'; }
+  const conv=CONVERSATIONS[state.chatTopic];
+  const current=conv[state.chatStep];
+  setTimeout(()=>{
+    state.chatAnswered.push({step:state.chatStep, text:current?.hint||'...'});
+    setTimeout(()=>{
+      if(state.chatStep+1<conv.length) state.chatStep++;
+      else state.chatDone=true;
+      if(!state.chatDone){
+        const next=conv[state.chatStep];
+        if(next?.speaker==='app') setTimeout(()=>speak(next.bg),350);
+      }
+      renderChatMessages();
+    },700);
+  },2000);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MAP RENDER
+// ═══════════════════════════════════════════════════════════════
+function renderMap(){
+  const mastered=getMasteredCount();
+  const unlockedCount=CITIES.filter(c=>mastered>=c.unlockAt).length;
+  document.getElementById('map-subtitle').textContent=`${unlockedCount} von ${CITIES.length} Städten frei`;
+
+  document.getElementById('city-buttons').innerHTML=CITIES.map(city=>{
+    const ok=mastered>=city.unlockAt;
+    return `<button class="city-btn ${ok?'':'locked'}" onclick="${ok?`showCityFact('${city.name}','${city.emoji}','${city.fact.replace(/'/g,"\\'")}')`:''}"
+      style="background:${ok?'rgba(255,209,102,0.20)':'rgba(255,255,255,0.06)'};color:${ok?'var(--gold)':'var(--muted)'};border:1px solid ${ok?'rgba(255,209,102,0.55)':'var(--border)'}">
+      <span style="font-size:15px">${ok?city.emoji:'🔒'}</span>${city.name}
+    </button>`;
+  }).join('');
+
+  document.getElementById('city-list').innerHTML=CITIES.map(city=>{
+    const ok=mastered>=city.unlockAt;
+    return `<div class="unlock-row" style="border-color:${ok?'rgba(255,209,102,0.33)':'var(--border)'}">
+      <span style="font-size:17px;opacity:${ok?1:0.3}">${city.emoji}</span>
+      <div style="flex:1">
+        <div style="color:${ok?'var(--text)':'var(--muted)'};font-size:12px;font-weight:800">${city.name}</div>
+        <div style="color:var(--muted);font-size:10px">ab ${city.unlockAt} Sätzen</div>
+      </div>
+      ${ok?`<span style="color:var(--gold);font-size:11px;font-weight:900">✓ Frei!</span>`
+          :`<span style="color:var(--muted);font-size:11px">${city.unlockAt-mastered} fehlen</span>`}
+    </div>`;
+  }).join('');
+}
+
+function showCityFact(name, emoji, fact){
+  const el=document.getElementById('city-fact');
+  el.style.display='block';
+  el.innerHTML=`<div style="display:flex;gap:7px;align-items:center;margin-bottom:5px">
+    <span style="font-size:22px">${emoji}</span>
+    <span style="color:var(--gold);font-size:15px;font-weight:900">${name}</span>
+  </div>
+  <div style="color:var(--text);font-size:12px;line-height:1.6">${fact}</div>`;
+  el.classList.add('anim-pop');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ADMIN RENDER
+// ═══════════════════════════════════════════════════════════════
+function setAdminTab(tab){
+  state.adminTab=tab;
+  ['sentences','export','import'].forEach(t=>{
+    document.getElementById('admin-'+t).style.display=t===tab?'flex':'none';
+    document.getElementById('atab-'+t).classList.toggle('active',t===tab);
+  });
+}
+
+function renderAdmin(){
+  updatePinBadge();
+  // Stats
+  const total=state.topics.reduce((n,t)=>n+t.sentences.length,0);
+  const human=Object.keys(state.audioMap).length;
+  const newSents=state.topics.reduce((n,t)=>n+t.sentences.filter(s=>s.origin==='teacher').length,0);
+  const mastered=getMasteredCount();
+  document.getElementById('admin-stats').innerHTML=[
+    {l:'Gesamt',v:total,c:'var(--text)'},{l:'Human ✓',v:human,c:'var(--teal)'},
+    {l:'Neu',v:newSents,c:'var(--gold)'},{l:'Gemeistert',v:mastered,c:'var(--purple)'},
+  ].map(s=>`<div style="flex:1;background:var(--cardd);border-radius:10px;padding:7px 4px;border:1px solid var(--border);text-align:center">
+    <div style="color:${s.c};font-size:14px;font-weight:900">${s.v}</div>
+    <div style="color:var(--muted);font-size:8px;font-weight:700">${s.l}</div>
+  </div>`).join('')+
+  `<button onclick="openPinSetup()" style="background:rgba(255,209,102,0.18);border:1px solid rgba(255,209,102,0.44);border-radius:10px;padding:7px 10px;font-size:16px" title="PIN">🔐</button>`;
+
+  renderAdminSentences();
+  renderAdminExport();
+  renderAdminImport();
+  setAdminTab(state.adminTab);
+}
+
+function renderAdminSentences(){
+  const el=document.getElementById('admin-sentences');
+  let html=`<div style="position:relative;margin-bottom:8px;flex-shrink:0">
+    <span style="position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--muted)">🔍</span>
+    <input id="admin-search" type="text" placeholder="Satz suchen..." oninput="renderAdminSentences()"
+      style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:8px 9px 8px 28px;color:var(--text);font-size:12px"/>
+  </div><div>`;
+
+  const search=(document.getElementById('admin-search')?.value||'').toLowerCase();
+  state.topics.forEach(topic=>{
+    const filteredSentences=search?topic.sentences.filter(s=>s.de.toLowerCase().includes(search)||s.bg.includes(search)):topic.sentences;
+    if(search&&filteredSentences.length===0) return;
+    const extras=topic.sentences.filter(s=>s.origin==='teacher');
+    const remaining=EXTRA_LIMIT-extras.length;
+    const humanCount=topic.sentences.filter(s=>state.audioMap[s.id]).length;
+    const isOpen=state.openTopicId===topic.id;
+    const pct=Math.round(humanCount/Math.max(1,topic.sentences.length)*100);
+    const circumference=2*Math.PI*13;
+    const dash=circumference*(1-humanCount/Math.max(1,topic.sentences.length));
+
+    html+=`<div class="topic-cluster ${isOpen?'open':''}" style="border-color:${isOpen?topic.color+'55':'var(--border)'}">
+      <button class="topic-header" onclick="toggleTopic('${topic.id}')">
+        <div class="topic-icon-box" style="background:${topic.color}22;border:1px solid ${topic.color}44">${topic.emoji}</div>
+        <div style="flex:1">
+          <div style="color:var(--text);font-size:14px;font-weight:900">${topic.name}</div>
+          <div style="display:flex;gap:5px;margin-top:2px;flex-wrap:wrap">
+            <span class="s-badge" style="background:${topic.color}22;color:${topic.color}">${topic.sentences.length} Sätze</span>
+            <span class="s-badge" style="background:rgba(6,214,160,0.22);color:var(--teal)">${humanCount} Human</span>
+            ${extras.length>0?`<span class="s-badge" style="background:rgba(255,209,102,0.22);color:var(--gold)">+${extras.length} Neu</span>`:''}
+          </div>
+        </div>
+        <div style="position:relative;width:34px;height:34px;flex-shrink:0">
+          <svg width="34" height="34" style="transform:rotate(-90deg)">
+            <circle cx="17" cy="17" r="13" fill="none" stroke="var(--border)" stroke-width="3"/>
+            <circle cx="17" cy="17" r="13" fill="none" stroke="${topic.color}" stroke-width="3"
+              stroke-dasharray="${circumference}" stroke-dashoffset="${dash}" stroke-linecap="round"/>
+          </svg>
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:${topic.color};font-size:8px;font-weight:900">${pct}%</div>
+        </div>
+        <span style="color:var(--muted);font-size:14px">${isOpen?'▲':'▼'}</span>
+      </button>`;
+
+    if(isOpen){
+      html+=`<div style="border-top:1px solid var(--border);padding:10px 12px 12px">
+        <div class="quota-bar">
+          <div style="flex:1">
+            <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+              <span style="color:var(--muted);font-size:9px;font-weight:800;text-transform:uppercase">Zusätzliche Sätze</span>
+              <span style="color:${remaining===0?'var(--rose)':'var(--gold)'};font-size:9px;font-weight:900">${extras.length}/${EXTRA_LIMIT}</span>
+            </div>
+            <div class="prog-track" style="height:4px"><div class="prog-fill" style="width:${(extras.length/EXTRA_LIMIT)*100}%;background:${remaining<5?'var(--rose)':'var(--gold)'}"></div></div>
+          </div>
+          <span style="color:${remaining===0?'var(--rose)':'var(--muted)'};font-size:10px">${remaining===0?'Voll':`${remaining} frei`}</span>
+        </div>`;
+
+      filteredSentences.forEach(s=>{
+        const ha=!!state.audioMap[s.id];
+        const card=state.deck[s.id];
+        const pc=card?{new:'var(--muted)',learning:'var(--gold)',review:'var(--purple)',mastered:'var(--teal)'}[card.phase]:'var(--muted)';
+        html+=`<div class="sentence-row" style="border-color:${ha?'rgba(6,214,160,0.33)':'var(--border)'}">
+          <div class="sentence-inner">
+            <div style="width:6px;height:6px;border-radius:3px;background:${pc};flex-shrink:0;margin-top:5px"></div>
+            <div style="flex:1;min-width:0">
+              <div class="s-badges">
+                <span class="s-badge" style="background:rgba(107,104,128,0.22);color:var(--muted)">${s.origin==='original'?'Orig.':'Neu'}</span>
+                ${ha?`<span class="s-badge" style="background:rgba(6,214,160,0.22);color:var(--teal)">✓ Human</span>`:''}
+                ${!ha?`<span class="s-badge" style="background:rgba(255,209,102,0.22);color:var(--gold)">TTS</span>`:''}
+                ${card&&card.phase!=='new'?`<span style="color:var(--muted);font-size:8px">↩${formatDue(card.nextDue)}</span>`:''}
+              </div>
+              <div style="color:var(--text);font-size:11px;font-weight:700;line-height:1.3">${s.de}</div>
+              <div style="color:var(--purple);font-size:11px;margin-top:1px">${s.bg}</div>
+            </div>
+            <div class="s-actions">
+              <button class="s-btn" style="background:rgba(168,85,247,0.18);color:var(--purple)" onclick="speak('${s.bg.replace(/'/g,"\\'")}')" >🔊</button>
+              <button class="s-btn" style="background:rgba(6,214,160,0.18);color:var(--teal)"   onclick="triggerAudioUpload(${s.id})">⬆️</button>
+              <button class="s-btn" style="background:rgba(56,189,248,0.18);color:var(--blue)"  onclick="openEdit(${JSON.stringify(s).replace(/"/g,'&quot;')})">✏️</button>
+              ${s.origin==='teacher'?`<button class="s-btn" style="background:rgba(255,107,107,0.18);color:var(--rose)" onclick="deleteSentence(${s.id},'${topic.id}')">🗑️</button>`:''}
+            </div>
+          </div>
+        </div>`;
+      });
+
+      html+=`${remaining>0
+        ?`<button class="add-btn" onclick="openAddSentence('${topic.id}')" style="background:${topic.color}12;border:2px dashed ${topic.color}44;color:${topic.color}">
+            ✨ Neuen Satz hinzufügen <span style="color:var(--muted);font-size:10px">(${remaining} frei)</span>
+          </button>`
+        :`<div style="background:rgba(255,107,107,0.10);border-radius:9px;padding:8px;border:1px solid rgba(255,107,107,0.33);text-align:center;color:var(--rose);font-size:10px;font-weight:700">Maximum ${EXTRA_LIMIT} Sätze erreicht</div>`
+      }</div>`;
+    }
+    html+='</div>';
+  });
+
+  // Audio overview
+  html+=`<div class="card" style="margin-bottom:8px;margin-top:8px">
+    <div class="label" style="margin-bottom:10px">Audio-Fortschritt</div>`;
+  state.topics.forEach(t=>{
+    const hc=t.sentences.filter(s=>state.audioMap[s.id]).length;
+    const pct=Math.round(hc/Math.max(1,t.sentences.length)*100);
+    html+=`<div class="audio-prog-row">
+      <div class="apr-header">
+        <span style="color:var(--text);font-size:11px;font-weight:700">${t.emoji} ${t.name}</span>
+        <span style="color:${pct===100?'var(--teal)':'var(--muted)'};font-size:10px;font-weight:700">${hc}/${t.sentences.length}</span>
+      </div>
+      <div class="prog-track" style="height:5px"><div class="prog-fill" style="width:${pct}%;background:${pct===100?'var(--teal)':`linear-gradient(90deg,${t.color},${t.color}88)`}"></div></div>
+    </div>`;
+  });
+  html+='</div></div>';
+  el.innerHTML=html;
+}
+
+function toggleTopic(id){
+  state.openTopicId=state.openTopicId===id?null:id;
+  renderAdminSentences();
+}
+
+function triggerAudioUpload(id){
+  requirePin(()=>{ state.uploadTargetId=id; document.getElementById('audio-file-input').click(); });
+}
+function handleAudioUpload(){
+  const file=document.getElementById('audio-file-input').files[0];
+  if(!file||!state.uploadTargetId) return;
+  state.audioMap[state.uploadTargetId]=file.name;
+  LS.save('audioMap', state.audioMap);
+  state.uploadTargetId=null;
+  document.getElementById('audio-file-input').value='';
+  showToast('✅ Audio hochgeladen!');
+  renderAdminSentences();
+}
+
+function openEdit(sentence){
+  requirePin(()=>{
+    state.editTarget=sentence; state.addToTopicId=null;
+    document.getElementById('edit-title').textContent='✏️ Satz bearbeiten';
+    document.getElementById('edit-de').value=sentence.de||'';
+    document.getElementById('edit-en').value=sentence.en||'';
+    document.getElementById('edit-bg').value=sentence.bg||'';
+    document.getElementById('edit-sheet').classList.add('open');
+  });
+}
+
+function openAddSentence(topicId){
+  requirePin(()=>{
+    state.editTarget=null; state.addToTopicId=topicId;
+    document.getElementById('edit-title').textContent='✨ Neuen Satz hinzufügen';
+    document.getElementById('edit-de').value='';
+    document.getElementById('edit-en').value='';
+    document.getElementById('edit-bg').value='';
+    document.getElementById('edit-sheet').classList.add('open');
+  });
+}
+
+function previewTTS(){
+  const bg=document.getElementById('edit-bg').value.trim();
+  if(bg) speak(bg);
+}
+
+function saveEdit(){
+  const de=document.getElementById('edit-de').value.trim();
+  const en=document.getElementById('edit-en').value.trim();
+  const bg=document.getElementById('edit-bg').value.trim();
+  if(!de||!bg){ showToast('⚠️ Deutsch und Bulgarisch sind Pflichtfelder'); return; }
+  if(state.addToTopicId){
+    const ns={id:newId(),de,en,bg,origin:'teacher'};
+    state.topics=state.topics.map(t=>t.id===state.addToTopicId?{...t,sentences:[...t.sentences,ns]}:t);
+    state.deck[ns.id]=createCard(ns.id);
+    showToast('✅ Satz hinzugefügt!');
+  } else if(state.editTarget){
+    state.topics=state.topics.map(t=>({...t,sentences:t.sentences.map(s=>s.id===state.editTarget.id?{...s,de,en,bg}:s)}));
+    showToast('✅ Satz gespeichert!');
+  }
+  saveAll();
+  closeEditSheet();
+  renderAdminSentences();
+}
+
+function closeEditSheet(){
+  document.getElementById('edit-sheet').classList.remove('open');
+  state.editTarget=null; state.addToTopicId=null;
+}
+
+function deleteSentence(id, topicId){
+  requirePin(()=>{
+    state.topics=state.topics.map(t=>t.id===topicId?{...t,sentences:t.sentences.filter(s=>s.id!==id)}:t);
+    delete state.deck[id]; delete state.audioMap[id];
+    saveAll(); showToast('🗑️ Satz gelöscht'); renderAdminSentences();
+  });
+}
+
+function renderAdminExport(){
+  const el=document.getElementById('admin-export');
+  el.innerHTML=`
+    <div style="color:var(--muted);font-size:11px;line-height:1.6;margin-bottom:12px">
+      <span style="color:var(--gold);font-weight:700">HTML</span> zum Lesen & Drucken.
+      <span style="color:var(--teal);font-weight:700">CSV</span> zum Bearbeiten & Re-Importieren.
+    </div>
+    <div class="export-card">
+      <div style="color:var(--text);font-size:13px;font-weight:800;margin-bottom:3px">📦 Vollständiger Export</div>
+      <div style="color:var(--muted);font-size:11px;margin-bottom:10px">Alle ${state.topics.reduce((n,t)=>n+t.sentences.length,0)} Sätze + ${EXTRA_LIMIT} Leerzeilen pro Thema</div>
+      <div style="display:flex;gap:8px">
+        <button onclick="exportHTML(null)" style="flex:1;background:linear-gradient(135deg,var(--purple),#6366f1);border:none;border-radius:11px;padding:11px;color:white;font-size:12px;font-weight:800">📄 HTML</button>
+        <button onclick="exportCSV(null)" style="flex:1;background:linear-gradient(135deg,var(--teal),#00b894);border:none;border-radius:11px;padding:11px;color:white;font-size:12px;font-weight:800">📊 CSV</button>
+      </div>
+    </div>
+    <div class="label" style="margin-bottom:8px">Nach Thema exportieren</div>
+    ${state.topics.map(t=>`<div class="export-card" style="margin-bottom:7px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <span style="font-size:18px">${t.emoji}</span>
+        <span style="color:var(--text);font-size:13px;font-weight:800">${t.name}</span>
+        <span style="color:var(--muted);font-size:10px">${t.sentences.length} Sätze</span>
+      </div>
+      <div style="display:flex;gap:7px">
+        <button onclick="exportHTML('${t.id}')" style="flex:1;background:rgba(168,85,247,0.22);border:1px solid rgba(168,85,247,0.44);border-radius:9px;padding:8px;color:var(--purple);font-size:11px;font-weight:800">📄 HTML</button>
+        <button onclick="exportCSV('${t.id}')"  style="flex:1;background:rgba(6,214,160,0.22);border:1px solid rgba(6,214,160,0.44);border-radius:9px;padding:8px;color:var(--teal);font-size:11px;font-weight:800">📊 CSV</button>
+      </div>
+    </div>`).join('')}
+    <div style="background:rgba(56,189,248,0.12);border-radius:12px;padding:10px 12px;border:1px solid rgba(56,189,248,0.33);color:var(--muted);font-size:11px;line-height:1.6">
+      💡 <span style="color:var(--blue);font-weight:700">Tipp:</span> HTML ausdrucken / mit Lehrer besprechen. CSV in Excel bearbeiten, zurück importieren.
+    </div>`;
+}
+
+function renderAdminImport(){
+  const el=document.getElementById('admin-import');
+  el.innerHTML=`
+    <div class="import-format">
+      <div style="color:var(--gold);font-size:11px;font-weight:800;margin-bottom:7px">📋 CSV-Format</div>
+      <div style="color:var(--muted);font-size:10px;line-height:1.8;font-family:monospace">
+        Trennzeichen: <span style="color:var(--teal)">Semikolon ( ; )</span><br>
+        Spalten: <span style="color:var(--text)">ID ; Thema ; Deutsch ; English ; Български ; Typ</span><br>
+        Updates: <span style="color:var(--purple)">ID = Zahl → aktualisiert</span><br>
+        Neu: <span style="color:var(--gold)">ID = +1…+20, Typ = teacher</span>
+      </div>
+    </div>
+    <button onclick="document.getElementById('csv-file-input').click()" style="width:100%;background:linear-gradient(135deg,var(--rose),var(--purple));border:none;border-radius:14px;padding:15px;color:white;font-size:14px;font-weight:900;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:12px">
+      <span style="font-size:22px">⬆️</span> CSV importieren ${!state.pinUnlocked?'🔐':''}
+    </button>
+    ${state.importResult?`<div style="background:${state.importResult.ok?'rgba(6,214,160,0.18)':'rgba(255,107,107,0.18)'};border-radius:14px;padding:13px 15px;border:1px solid ${state.importResult.ok?'rgba(6,214,160,0.44)':'rgba(255,107,107,0.44)'}" class="anim-pop">
+      <div style="font-size:28px;margin-bottom:8px">${state.importResult.ok?'✅':'❌'}</div>
+      ${state.importResult.ok
+        ?`<div style="color:var(--teal);font-size:14px;font-weight:900">Import erfolgreich!</div>
+           <div style="color:var(--muted);font-size:12px;margin-top:4px">${state.importResult.updatedCount} aktualisiert · ${state.importResult.addedCount} hinzugefügt</div>`
+        :`<div style="color:var(--rose);font-size:14px;font-weight:900">Fehler</div>
+           <div style="color:var(--muted);font-size:11px;margin-top:4px">${state.importResult.error}</div>`}
+      <button onclick="state.importResult=null;renderAdminImport()" style="margin-top:10px;background:none;border:1px solid var(--border);border-radius:8px;padding:6px 14px;color:var(--muted);font-size:11px">Schließen</button>
+    </div>`:''}
+    <div class="label" style="margin-top:14px;margin-bottom:8px">Aktueller Bestand</div>
+    ${state.topics.map(t=>{
+      const ex=t.sentences.filter(s=>s.origin==='teacher');
+      return `<div style="background:var(--card);border-radius:11px;padding:8px 12px;border:1px solid var(--border);margin-bottom:6px;display:flex;align-items:center;gap:9px">
+        <span style="font-size:16px">${t.emoji}</span>
+        <div style="flex:1">
+          <div style="color:var(--text);font-size:12px;font-weight:700">${t.name}</div>
+          <div style="color:var(--muted);font-size:10px">${t.sentences.length} gesamt · ${ex.length} Lehrer · ${EXTRA_LIMIT-ex.length} frei</div>
+        </div>
+      </div>`;
+    }).join('')}`;
+}
+
+function handleCSVImport(){
+  const file=document.getElementById('csv-file-input').files[0];
+  if(!file) return;
+  requirePin(()=>{
+    const reader=new FileReader();
+    reader.onload=e=>{
+      try{
+        const {newTopics,updatedCount,addedCount}=parseCSV(e.target.result);
+        state.topics=newTopics;
+        syncDeck();
+        state.importResult={ok:true,updatedCount,addedCount};
+      }catch(err){
+        state.importResult={ok:false,error:String(err)};
+      }
+      saveAll();
+      document.getElementById('csv-file-input').value='';
+      renderAdminImport();
+    };
+    reader.readAsText(file,'utf-8');
+  });
+}
+
+function parseCSV(text){
+  const lines=text.split(/\r?\n/).filter(l=>l.trim());
+  const hdr=lines[0].split(';').map(h=>h.replace(/^"|"$/g,'').toLowerCase().trim());
+  const ci=n=>hdr.findIndex(h=>h.includes(n));
+  const [iId,iThema,iDe,iEn,iBg,iTyp]=[ci('id'),ci('thema'),ci('deutsch'),ci('english'),ci('bulgar'),ci('typ')];
+  const updates=[]; const additions=[];
+  lines.slice(1).forEach(line=>{
+    if(!line.trim()) return;
+    const c=line.split(';').map(x=>x.replace(/^"|"$/g,'').trim());
+    const [id,thema,de,en,bg,typ]=[c[iId],c[iThema]||'',c[iDe]||'',c[iEn]||'',c[iBg]||'',(c[iTyp]||'').toLowerCase()];
+    if(!de||!bg) return;
+    if(id&&!id.startsWith('+')&&!isNaN(id)) updates.push({id:Number(id),de,en,bg});
+    else if(typ==='teacher'&&de&&bg){ const t=state.topics.find(t=>t.name===thema); if(t) additions.push({topicId:t.id,de,en,bg}); }
+  });
+  const newTopics=state.topics.map(t=>({...t,sentences:t.sentences.map(s=>{const u=updates.find(u=>u.id===s.id);return u?{...s,...u}:s;})}));
+  additions.forEach(a=>{
+    const ti=newTopics.findIndex(t=>t.id===a.topicId); if(ti<0) return;
+    const ex=newTopics[ti].sentences.filter(s=>s.origin==='teacher');
+    if(ex.length>=EXTRA_LIMIT) return;
+    newTopics[ti]={...newTopics[ti],sentences:[...newTopics[ti].sentences,{id:newId(),de:a.de,en:a.en,bg:a.bg,origin:'teacher'}]};
+  });
+  return {newTopics,updatedCount:updates.length,addedCount:additions.length};
+}
+
+// ═══════════════════════════════════════════════════════════════
+// EXPORT
+// ═══════════════════════════════════════════════════════════════
+function exportCSV(topicId){
+  const filtered=topicId?state.topics.filter(t=>t.id===topicId):state.topics;
+  const rows=[['ID','Thema','Deutsch','English','Български','Typ']];
+  filtered.forEach(t=>{
+    t.sentences.forEach(s=>rows.push([s.id,t.name,s.de,s.en||'',s.bg,s.origin]));
+    for(let i=1;i<=EXTRA_LIMIT;i++) rows.push([`+${i}`,t.name,'','','','teacher']);
+  });
+  const csv=rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(';')).join('\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url;
+  a.download=topicId?`bulgarisch_${topicId}.csv`:'bulgarisch_alle.csv';
+  a.click(); URL.revokeObjectURL(url);
+  showToast('📊 CSV wird heruntergeladen...');
+}
+
+function exportHTML(topicId){
+  const filtered=topicId?state.topics.filter(t=>t.id===topicId):state.topics;
+  const today=new Date().toLocaleDateString('de-DE',{day:'2-digit',month:'long',year:'numeric'});
+  let html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Bulgarisch Lehrer-Export</title>
+<style>body{font-family:Arial,sans-serif;max-width:900px;margin:40px auto;color:#222}
+h1{color:#3A3080;border-bottom:3px solid #3A3080;padding-bottom:8px}h2{color:#3A3080;margin-top:32px;font-size:15px}
+table{width:100%;border-collapse:collapse;margin-bottom:6px;font-size:11px}
+th{background:#3A3080;color:white;padding:6px 9px;text-align:left}
+td{padding:6px 9px;border:1px solid #ddd;vertical-align:top}
+tr:nth-child(even) td{background:#f5f4ff}.nr td{background:#fffbe6;color:#8B5E00;font-style:italic}
+.bg{color:#2D0080}</style></head><body>
+<h1>Bulgarisch Lern-App — Lehrer-Arbeitsblatt</h1>
+<p style="color:#888;font-size:12px">Exportiert: ${today}</p>`;
+  filtered.forEach(t=>{
+    html+=`<h2>${t.emoji} ${t.name}</h2><table><tr><th>ID</th><th>Deutsch</th><th>English</th><th>Български</th><th>Typ</th></tr>`;
+    t.sentences.forEach(s=>{ html+=`<tr><td>${s.id}</td><td>${s.de}</td><td><em>${s.en||''}</em></td><td class="bg">${s.bg}</td><td>original</td></tr>`; });
+    for(let i=1;i<=EXTRA_LIMIT;i++) html+=`<tr class="nr"><td>+${i}</td><td></td><td></td><td></td><td>teacher</td></tr>`;
+    html+=`</table>`;
+  });
+  html+=`</body></html>`;
+  const blob=new Blob([html],{type:'text/html;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url;
+  a.download=topicId?`bulgarisch_${topicId}.html`:'bulgarisch_alle.html';
+  a.click(); URL.revokeObjectURL(url);
+  showToast('📄 HTML wird heruntergeladen...');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CLOCK
+// ═══════════════════════════════════════════════════════════════
+function updateClock(){
+  const now=new Date();
+  document.getElementById('clock').textContent=
+    now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+}
+setInterval(updateClock,10000); updateClock();
+
+// ═══════════════════════════════════════════════════════════════
+// STREAK
+// ═══════════════════════════════════════════════════════════════
+function updateStreak(){
+  const today=new Date().toDateString();
+  if(state.streak.lastDate!==today){
+    const yesterday=new Date(Date.now()-DAY_MS).toDateString();
+    if(state.streak.lastDate===yesterday) state.streak.count++;
+    else if(state.streak.lastDate!==today) state.streak.count=1;
+    state.streak.lastDate=today;
+    LS.save('streak', state.streak);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PWA INSTALL
+// ═══════════════════════════════════════════════════════════════
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt', e=>{
+  e.preventDefault(); deferredPrompt=e;
+  document.getElementById('install-banner').classList.add('show');
+});
+document.getElementById('install-btn').addEventListener('click', async()=>{
+  if(!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const result=await deferredPrompt.userChoice;
+  deferredPrompt=null;
+  document.getElementById('install-banner').classList.remove('show');
+});
+
+// ═══════════════════════════════════════════════════════════════
+// SERVICE WORKER REGISTRATION
+// ═══════════════════════════════════════════════════════════════
+if('serviceWorker' in navigator){
+  window.addEventListener('load', ()=>{
+    navigator.serviceWorker.register('/sw.js').then(reg=>{
+      console.log('SW registered:', reg.scope);
+    }).catch(err=>{ console.log('SW failed:', err); });
+  });
+}
+
+
+// ═══════════════════════════════════════════════════════════════
+// PROFILE & ONBOARDING SYSTEM
+// ═══════════════════════════════════════════════════════════════
+
+const MAX_PROFILES = 4;
+const THEMES = [
+  {id:"rose",   name:"Rosa",    primary:"#FF6B6B"},
+  {id:"purple", name:"Lila",    primary:"#A855F7"},
+  {id:"teal",   name:"Türkis",  primary:"#06D6A0"},
+  {id:"gold",   name:"Gold",    primary:"#FFD166"},
+  {id:"blue",   name:"Blau",    primary:"#38BDF8"},
+  {id:"green",  name:"Grün",    primary:"#4ADE80"},
+];
+const GOALS = [
+  {mins:5,  label:"5 Min",  desc:"Kurz & knackig",      emoji:"⚡"},
+  {mins:10, label:"10 Min", desc:"Täglich solide",       emoji:"🎯"},
+  {mins:15, label:"15 Min", desc:"Richtig durchstarten", emoji:"🚀"},
+  {mins:20, label:"20 Min", desc:"Intensiv lernen",      emoji:"🏆"},
+];
+const EMOJI_SETS = {
+  animals:["🦋","🐬","🦄","🐱","🦊","🐼","🐨","🦁","🐸","🐙"],
+  nature: ["🌸","🌺","🌻","⭐","🌙","🌈","🔮","💎","🍀","🌿"],
+  hobby:  ["🎵","🎨","📚","✏️","🎭","🎪","🎠","🎡","🏆","🎯"],
+};
+
+// Active profile state
+let activeProfile = null;
+
+// ── ob state
+let obStep = 0;
+let obData = {name:"", emoji:"", themeId:"purple", dailyGoal:10};
+
+function getTheme(id){ return THEMES.find(t=>t.id===id)||THEMES[1]; }
+function getGoal(mins){ return GOALS.find(g=>g.mins===mins)||GOALS[1]; }
+
+// Apply theme colour to CSS variables
+function applyTheme(themeId){
+  const t=getTheme(themeId);
+  document.documentElement.style.setProperty('--primary', t.primary);
+  // Update gradient buttons that use rose/purple
+  document.querySelectorAll('.btn-primary, #start-btn').forEach(el=>{
+    // only update if it's the start button
+  });
+}
+
+// ── ONBOARDING INIT
+function initOnboarding(){
+  // Build emoji grids
+  ['animals','nature','hobby'].forEach(cat=>{
+    const el=document.getElementById('emoji-'+cat);
+    if(!el) return;
+    el.innerHTML=EMOJI_SETS[cat].map(e=>
+      `<button class="emoji-btn" onclick="obSelectEmoji('${e}')">${e}</button>`
+    ).join('');
+  });
+  // Build theme buttons
+  const tb=document.getElementById('theme-btns');
+  if(tb) tb.innerHTML=THEMES.map(t=>`
+    <button class="theme-btn" id="theme-btn-${t.id}" onclick="obSelectTheme('${t.id}')">
+      <div class="theme-circle" id="theme-circle-${t.id}" style="background:linear-gradient(135deg,${t.primary},${t.primary}88)"></div>
+      <div style="text-align:left">
+        <div style="font-size:15px;font-weight:800;color:var(--text)">${t.name}</div>
+        <div style="font-size:11px;color:var(--muted)">Deine App-Akzentfarbe</div>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:3px">
+        ${[t.primary,t.primary+'88',t.primary+'44'].map((c,i)=>`<div style="width:10px;height:${10+i*4}px;border-radius:3px;background:${c}"></div>`).join('')}
+      </div>
+    </button>`).join('');
+  // Build goal buttons
+  const gb=document.getElementById('goal-btns');
+  if(gb) gb.innerHTML=GOALS.map(g=>`
+    <button class="goal-btn" id="goal-btn-${g.mins}" onclick="obSelectGoal(${g.mins})">
+      <span style="font-size:28px">${g.emoji}</span>
+      <div style="text-align:left">
+        <div style="font-size:16px;font-weight:800;color:var(--text)">${g.label}</div>
+        <div style="font-size:12px;color:var(--muted)">${g.desc}</div>
+      </div>
+    </button>`).join('');
+  // Default selections
+  obSelectTheme('purple');
+  obSelectGoal(10);
+  obShowStep(0);
+}
+
+function obShowStep(n){
+  obStep=n;
+  document.querySelectorAll('.ob-screen').forEach(s=>s.classList.remove('active'));
+  const el=document.getElementById('ob-step-'+n);
+  if(el) el.classList.add('active');
+  // Progress bar
+  const fill=document.getElementById('ob-fill');
+  if(fill){ fill.style.width=(n===0?0:Math.round((n/5)*100))+'%'; fill.style.background='linear-gradient(90deg,'+getTheme(obData.themeId).primary+','+getTheme(obData.themeId).primary+'88)'; }
+  // Step-specific updates
+  if(n===2){ const p=document.getElementById('ob-theme-preview-icon'); if(p&&obData.emoji) p.textContent=obData.emoji; }
+  if(n===3){ const p=document.getElementById('ob-goal-icon'); if(p&&obData.emoji) p.textContent=obData.emoji; }
+  if(n===5) obBuildConfirm();
+}
+
+function obNext(){
+  if(obStep===0){ obShowStep(1); return; }
+  if(obStep===1){ if(obData.name.trim().length<2) return; obShowStep(2); return; }
+  if(obStep===2){ if(!obData.emoji) return; obShowStep(3); return; }
+  if(obStep===3){ obShowStep(4); return; }
+  if(obStep===4){ obShowStep(5); return; }
+}
+function obBack(){
+  if(obStep>0) obShowStep(obStep-1);
+}
+
+function obNameInput(){
+  const val=document.getElementById('ob-name-input').value;
+  obData.name=val;
+  const valid=val.trim().length>=2;
+  const inp=document.getElementById('ob-name-input');
+  inp.style.borderColor=valid?getTheme(obData.themeId).primary:'var(--border)';
+  const btn=document.getElementById('ob-name-next');
+  if(btn){ btn.disabled=!valid; btn.style.background=valid?'linear-gradient(135deg,var(--purple),#6366f1)':'var(--cardl)'; btn.style.color=valid?'white':'var(--muted)'; }
+  const preview=document.getElementById('ob-name-preview');
+  const nameShow=document.getElementById('ob-name-show');
+  if(preview&&nameShow){ preview.style.display=valid?'block':'none'; nameShow.textContent=val.trim(); }
+}
+
+function obSelectEmoji(e){
+  obData.emoji=e;
+  document.querySelectorAll('.emoji-btn').forEach(b=>{ b.classList.remove('selected'); b.style.borderColor='var(--border)'; b.style.background='var(--card)'; b.style.boxShadow='none'; });
+  event.target.classList.add('selected');
+  const tc=getTheme(obData.themeId).primary;
+  event.target.style.borderColor=tc; event.target.style.background=tc+'33'; event.target.style.boxShadow='0 0 12px '+tc+'44';
+  const prev=document.getElementById('ob-emoji-preview'); if(prev) prev.textContent=e;
+  const btn=document.getElementById('ob-emoji-next');
+  if(btn){ btn.disabled=false; btn.style.background='linear-gradient(135deg,var(--rose),#ff8e53)'; btn.style.color='white'; }
+}
+
+function obSelectTheme(id){
+  obData.themeId=id;
+  const t=getTheme(id);
+  THEMES.forEach(th=>{
+    const btn=document.getElementById('theme-btn-'+th.id);
+    const circle=document.getElementById('theme-circle-'+th.id);
+    if(btn){ btn.style.background=th.id===id?t.primary+'18':'var(--card)'; btn.style.borderColor=th.id===id?t.primary:'var(--border)'; }
+    if(circle){ circle.textContent=th.id===id?'✓':''; circle.style.borderColor=th.id===id?t.primary:'transparent'; circle.style.color=th.id===id?'white':'transparent'; }
+  });
+  const nextBtn=document.getElementById('ob-theme-next');
+  if(nextBtn){ nextBtn.style.background='linear-gradient(135deg,'+t.primary+','+t.primary+'aa)'; }
+  const progressFill=document.getElementById('ob-fill');
+  if(progressFill) progressFill.style.background='linear-gradient(90deg,'+t.primary+','+t.primary+'88)';
+}
+
+function obSelectGoal(mins){
+  obData.dailyGoal=mins;
+  const t=getTheme(obData.themeId);
+  GOALS.forEach(g=>{
+    const btn=document.getElementById('goal-btn-'+g.mins);
+    if(btn){
+      btn.style.background=g.mins===mins?t.primary+'18':'var(--card)';
+      btn.style.borderColor=g.mins===mins?t.primary:'var(--border)';
+      // Add/remove checkmark
+      const existing=btn.querySelector('.goal-check'); if(existing) existing.remove();
+      if(g.mins===mins){ const chk=document.createElement('div'); chk.className='goal-check'; chk.style.cssText='margin-left:auto;color:'+t.primary+';font-size:20px'; chk.textContent='✓'; btn.appendChild(chk); }
+    }
+  });
+  const nextBtn=document.getElementById('ob-goal-next');
+  if(nextBtn){ nextBtn.style.background='linear-gradient(135deg,'+t.primary+','+t.primary+'aa)'; }
+}
+
+function obBuildConfirm(){
+  const t=getTheme(obData.themeId);
+  const g=getGoal(obData.dailyGoal);
+  const card=document.getElementById('ob-confirm-card');
+  if(card){
+    card.style.background='linear-gradient(135deg,'+t.primary+'22,'+t.primary+'08)';
+    card.style.border='2px solid '+t.primary+'55';
+    card.innerHTML=`
+      <div class="avatar-big" style="background:${t.primary}22;border:3px solid ${t.primary};box-shadow:0 0 24px ${t.primary}44">${obData.emoji||'🦋'}</div>
+      <div style="text-align:center">
+        <div style="color:${t.primary};font-size:24px;font-weight:900">${obData.name}</div>
+        <div style="color:var(--muted);font-size:13px;margin-top:4px">Neues Profil</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
+        <div style="background:${t.primary}22;border:1px solid ${t.primary}44;border-radius:20px;padding:5px 12px;color:${t.primary};font-size:12px;font-weight:800">${t.name}</div>
+        <div style="background:${t.primary}22;border:1px solid ${t.primary}44;border-radius:20px;padding:5px 12px;color:${t.primary};font-size:12px;font-weight:800">${g.emoji} ${g.label}/Tag</div>
+        <div style="background:${t.primary}22;border:1px solid ${t.primary}44;border-radius:20px;padding:5px 12px;color:${t.primary};font-size:12px;font-weight:800">🇧🇬 A1 Start</div>
+      </div>`;
+  }
+  const confirmBtn=document.getElementById('ob-confirm-btn');
+  if(confirmBtn){
+    confirmBtn.style.background='linear-gradient(135deg,'+t.primary+','+t.primary+'aa)';
+    confirmBtn.style.boxShadow='0 8px 24px '+t.primary+'44';
+    confirmBtn.textContent=obData.emoji+' Los geht\'s, '+obData.name+'!';
+  }
+}
+
+function obConfirm(){
+  const profiles=LS.load('profiles',[]);
+  const newProfile={
+    id:Date.now().toString(),
+    name:obData.name.trim(),
+    emoji:obData.emoji,
+    themeId:obData.themeId,
+    dailyGoal:obData.dailyGoal,
+    streak:0, lastDate:null,
+    createdAt:Date.now(),
+  };
+  profiles.push(newProfile);
+  LS.save('profiles',profiles);
+  LS.save('activeProfileId',newProfile.id);
+  activeProfile=newProfile;
+  applyTheme(newProfile.themeId);
+  hideOnboarding();
+  onProfileLoaded(newProfile);
+}
+
+function hideOnboarding(){
+  document.getElementById('onboarding-overlay').classList.remove('active');
+}
+function showOnboarding(){
+  obData={name:"",emoji:"",themeId:"purple",dailyGoal:10};
+  document.getElementById('ob-name-input').value='';
+  document.getElementById('onboarding-overlay').classList.add('active');
+  initOnboarding();
+}
+
+// ── PROFILE SELECTOR
+function showProfileSelector(){
+  const profiles=LS.load('profiles',[]);
+  const list=document.getElementById('profile-list');
+  const t_active=getTheme(activeProfile?.themeId||'purple');
+  list.innerHTML=profiles.map((p,i)=>{
+    const t=getTheme(p.themeId); const g=getGoal(p.dailyGoal);
+    return `<div class="profile-selector-card" style="background:${t.primary}12;border:1px solid ${t.primary}44" id="pcard-${p.id}">
+      <button class="profile-selector-btn" onclick="selectProfile('${p.id}')">
+        <div class="avatar-mid" style="background:${t.primary}22;border:2px solid ${t.primary}66">${p.emoji}</div>
+        <div style="flex:1">
+          <div style="color:${t.primary};font-size:18px;font-weight:900">${p.name}</div>
+          <div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap">
+            <span style="background:${t.primary}22;color:${t.primary};padding:2px 8px;border-radius:8px;font-size:10px;font-weight:800">${t.name}</span>
+            <span style="background:${t.primary}22;color:${t.primary};padding:2px 8px;border-radius:8px;font-size:10px;font-weight:800">${g.emoji} ${g.label}/Tag</span>
+            <span style="background:${t.primary}22;color:${t.primary};padding:2px 8px;border-radius:8px;font-size:10px;font-weight:800">🔥 ${p.streak||0} Tage</span>
+          </div>
+        </div>
+        <div style="color:${t.primary};font-size:20px">▶</div>
+      </button>
+      <button onclick="confirmDeleteProfile('${p.id}')" style="width:100%;background:none;border:none;border-top:1px solid ${t.primary}18;padding:7px;color:var(--muted);font-size:11px;cursor:pointer;font-weight:700;font-family:inherit">🗑️ Profil entfernen</button>
+    </div>`;
+  }).join('');
+
+  if(profiles.length<MAX_PROFILES){
+    list.innerHTML+=`<button class="add-profile-btn" onclick="addNewProfile()">
+      <span style="font-size:24px">➕</span> Neues Profil erstellen
+      <span style="color:var(--muted);font-size:11px">(${MAX_PROFILES-profiles.length} frei)</span>
+    </button>`;
+  }
+  document.getElementById('profile-overlay').classList.add('active');
+}
+
+function hideProfileSelector(){
+  document.getElementById('profile-overlay').classList.remove('active');
+}
+
+function selectProfile(id){
+  const profiles=LS.load('profiles',[]);
+  const p=profiles.find(x=>x.id===id);
+  if(!p) return;
+  LS.save('activeProfileId',id);
+  activeProfile=p;
+  applyTheme(p.themeId);
+  hideProfileSelector();
+  onProfileLoaded(p);
+}
+
+function addNewProfile(){
+  hideProfileSelector();
+  showOnboarding();
+}
+
+function confirmDeleteProfile(id){
+  const card=document.getElementById('pcard-'+id);
+  if(!card) return;
+  const profiles=LS.load('profiles',[]);
+  const p=profiles.find(x=>x.id===id);
+  if(!p) return;
+  card.innerHTML=`<div style="padding:10px 18px;background:rgba(255,107,107,0.1);display:flex;align-items:center;gap:10px">
+    <span style="color:#FF6B6B;font-size:12px;flex:1;font-weight:700">Profil '${p.name}' wirklich löschen?</span>
+    <button onclick="deleteProfile('${id}')" style="background:#FF6B6B;border:none;border-radius:8px;padding:5px 12px;color:white;font-size:11px;font-weight:900;cursor:pointer">Ja</button>
+    <button onclick="showProfileSelector()" style="background:var(--cardl);border:1px solid var(--border);border-radius:8px;padding:5px 12px;color:var(--muted);font-size:11px;cursor:pointer;font-family:inherit">Nein</button>
+  </div>`;
+}
+
+function deleteProfile(id){
+  let profiles=LS.load('profiles',[]);
+  profiles=profiles.filter(p=>p.id!==id);
+  LS.save('profiles',profiles);
+  // Delete associated data
+  localStorage.removeItem('blapp_'+id+'_deck');
+  localStorage.removeItem('blapp_'+id+'_streak');
+  if(profiles.length===0){
+    hideProfileSelector();
+    showOnboarding();
+  } else {
+    if(activeProfile?.id===id){
+      LS.save('activeProfileId',profiles[0].id);
+      activeProfile=profiles[0];
+      applyTheme(profiles[0].themeId);
+    }
+    showProfileSelector();
+  }
+}
+
+// ── Called when profile is active and app should start
+function onProfileLoaded(profile){
+  activeProfile=profile;
+  // Update greeting
+  document.querySelectorAll('.profile-greeting').forEach(el=>el.textContent='Hallo, '+profile.name+'!');
+  // Update avatar buttons
+  document.querySelectorAll('.profile-avatar-btn').forEach(el=>el.textContent=profile.emoji);
+  // Re-render home
+  renderHome();
+  renderAdmin();
+}
+
+// ── BOOT: check for existing profiles
+function bootProfiles(){
+  const profiles=LS.load('profiles',[]);
+  if(profiles.length===0){
+    showOnboarding();
+    return false;
+  }
+  const activeId=LS.load('activeProfileId',null);
+  const p=profiles.find(x=>x.id===activeId)||profiles[0];
+  activeProfile=p;
+  LS.save('activeProfileId',p.id);
+  applyTheme(p.themeId);
+  onProfileLoaded(p);
+  return true;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════
+syncDeck();
+updateStreak();
+updateStreakBadge();
+bootProfiles();
+
+// Keyboard close for modals
+document.addEventListener('keydown', e=>{
+  if(e.key==='Escape'){
+    closeGoodie(); closePinModal(); closeEditSheet();
+  }
+});
+</script>
+</body>
+</html>
