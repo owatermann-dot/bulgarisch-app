@@ -22,6 +22,7 @@
     /* ── Reset & Base ── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
+      --primary:  #A855F7;
       --bg:       #0A0914;
       --card:     #13112A;
       --cardl:    #1C1938;
@@ -130,10 +131,10 @@
       font-size: 9px; font-weight: 800; letter-spacing: 0.4px;
       color: var(--muted); text-transform: uppercase;
     }
-    .nav-btn.active .nav-label { color: var(--gold); }
+    .nav-btn.active .nav-label { color: var(--primary, var(--gold)); }
     .nav-btn .nav-bar {
       width: 18px; height: 2.5px;
-      background: var(--gold); border-radius: 2px;
+      background: var(--primary, var(--gold)); border-radius: 2px;
       display: none;
     }
     .nav-btn.active .nav-bar { display: block; }
@@ -660,7 +661,7 @@
 
       <!-- SRS queue preview -->
       <div class="card" style="margin-bottom:12px">
-        <div class="label">SRS Lernplan — Heute</div>
+        <div class="label">Lehrplan Heute</div>
         <div id="srs-preview"><!-- filled by JS --></div>
         <div style="display:flex;gap:10px;margin-top:8px">
           <div style="display:flex;align-items:center;gap:3px"><div class="phase-dot" style="background:var(--muted)"></div><span style="color:var(--muted);font-size:9px">Neu</span></div>
@@ -671,7 +672,7 @@
       </div>
 
       <!-- CEFR ladder -->
-      <div class="label" style="margin-bottom:7px">CEFR Lernpfad</div>
+      
       <div id="cefr-ladder"><!-- filled by JS --></div>
     </div>
 
@@ -1274,88 +1275,226 @@ function updatePinBadge(){
 }
 
 // ═══════════════════════════════════════════════════════════════
-// HOME RENDER
+// HOME RENDER  — v3: profile-driven, fixed all Sprint-0 issues
 // ═══════════════════════════════════════════════════════════════
-function renderHome(){
-  const mastered=getMasteredCount();
-  const learning=Object.values(state.deck).filter(c=>c.phase==='learning'||c.phase==='review').length;
-  const due=getDueCount();
-  const level=getLevelFor(mastered);
-  const next=getNextLevel(mastered);
-  const prog=next?((mastered-level.minCards)/(next.minCards-level.minCards))*100:100;
 
-  // Level card
-  document.getElementById('level-card').style.borderColor=level.color+'44';
-  document.getElementById('level-card').innerHTML=`
-    <div style="display:flex;justify-content:space-between;align-items:flex-start">
-      <div>
-        <div class="label">Dein Niveau</div>
-        <div style="display:flex;align-items:baseline;gap:8px;margin-top:3px">
-          <div style="color:${level.color};font-size:32px;font-weight:900">${level.cefr}</div>
-          <div style="color:var(--text);font-size:13px;font-weight:700">${level.de}</div>
+// Lernpfad levels — 5 steps of 20% each
+const LERNPFAD_LEVELS = [
+  { id:"beginner",       label:"Beginner",        emoji:"🌱", minPct:0  },
+  { id:"standard",       label:"Standard",         emoji:"📖", minPct:20 },
+  { id:"fortgeschritten",label:"Fortgeschritten",  emoji:"⚡", minPct:40 },
+  { id:"super",          label:"Super",            emoji:"🌟", minPct:60 },
+  { id:"experte",        label:"Experte",          emoji:"🏆", minPct:80 },
+];
+
+function getPerfectCount() {
+  // Only sentences rated 'Perfekt' (quality=5 → phase mastered via repetitions)
+  // We track perfect via a separate counter per profile stored in state
+  return Object.values(state.deck).filter(c => c.phase === 'mastered').length;
+}
+
+function getTotalSentences() {
+  return getAllSentences().length;
+}
+
+function getLernpfadPct() {
+  const total = getTotalSentences();
+  if (total === 0) return 0;
+  return Math.min(100, Math.round((getPerfectCount() / total) * 100));
+}
+
+function getLernpfadLevel(pct) {
+  let level = LERNPFAD_LEVELS[0];
+  for (const l of LERNPFAD_LEVELS) { if (pct >= l.minPct) level = l; }
+  return level;
+}
+
+function getNextLernpfadLevel(pct) {
+  for (const l of LERNPFAD_LEVELS) { if (pct < l.minPct) return l; }
+  return null;
+}
+
+// Daily target: dailyGoal minutes / 1.8 min per sentence, minimum 3
+function getDailyTarget() {
+  const goal = activeProfile?.dailyGoal || 10;
+  return Math.max(3, Math.round(goal / 1.8));
+}
+
+// Sentences done today = cards reviewed today (any quality)
+function getSentencesToday() {
+  const today = new Date().toDateString();
+  return Object.values(state.deck).filter(c =>
+    c.lastReviewed && new Date(c.lastReviewed).toDateString() === today
+  ).length;
+}
+
+// Queue: all sentences NOT yet mastered (phase !== 'mastered')
+// New users see "Sätze lernen", returning users see "Sätze wiederholen"
+function buildLearnQueue() {
+  const all = getAllSentences();
+  // Due reviews first, then new sentences
+  return [
+    ...all.filter(s => state.deck[s.id] && state.deck[s.id].phase !== 'new' &&
+                       state.deck[s.id].phase !== 'mastered' && isDue(state.deck[s.id])),
+    ...all.filter(s => state.deck[s.id] && state.deck[s.id].phase === 'new'),
+  ];
+}
+
+function renderHome() {
+  const perfect  = getPerfectCount();
+  const total    = getTotalSentences();
+  const pct      = getLernpfadPct();
+  const level    = getLernpfadLevel(pct);
+  const nextLevel= getNextLernpfadLevel(pct);
+  const theme    = getTheme(activeProfile?.themeId || 'purple');
+  const queue    = buildLearnQueue();
+  const dueCount = queue.length;
+  const dailyTarget  = getDailyTarget();
+  const doneToday    = getSentencesToday();
+  const todayPct = Math.min(100, Math.round((doneToday / dailyTarget) * 100));
+  const isNewUser= perfect === 0 && Object.values(state.deck).every(c => c.phase === 'new');
+
+  // ── Avatar / Profile section (replaces CEFR ladder)
+  document.getElementById('level-card').style.borderColor = theme.primary + '44';
+  document.getElementById('level-card').style.background  =
+    'linear-gradient(135deg, ' + theme.primary + '15, ' + theme.primary + '05)';
+  document.getElementById('level-card').innerHTML = `
+    <div style="display:flex;align-items:center;gap:14px">
+      <!-- Avatar -->
+      <div onclick="showProfileSelector()" style="width:62px;height:62px;border-radius:31px;
+        font-size:34px;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+        background:${theme.primary}22;border:2px solid ${theme.primary};
+        box-shadow:0 0 16px ${theme.primary}44;cursor:pointer">
+        ${activeProfile?.emoji || '🦋'}
+      </div>
+      <!-- Name + level -->
+      <div style="flex:1;min-width:0">
+        <div style="color:var(--muted);font-size:11px;font-weight:700">Willkommen zurück</div>
+        <div style="color:${theme.primary};font-size:20px;font-weight:900;white-space:nowrap;
+          overflow:hidden;text-overflow:ellipsis" class="profile-greeting">
+          ${activeProfile?.name || 'Hallo'}!
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:3px">
+          <span style="font-size:14px">${level.emoji}</span>
+          <span style="color:var(--text);font-size:12px;font-weight:800">${level.label}</span>
+          <span style="color:var(--muted);font-size:11px">· ${pct}%</span>
         </div>
       </div>
-      <div style="background:${level.color}22;border:1px solid ${level.color}55;border-radius:12px;padding:6px 12px;text-align:center">
-        <div style="color:${level.color};font-size:18px;font-weight:900">Note ${level.grade}</div>
-        <div style="color:var(--muted);font-size:9px;font-weight:800">${level.gradeLabel.toUpperCase()}</div>
+      <!-- Streak -->
+      <div style="text-align:center;flex-shrink:0">
+        <div style="color:var(--gold);font-size:22px;font-weight:900">${state.streak?.count || 0} 🔥</div>
+        <div style="color:var(--muted);font-size:9px;font-weight:800">SERIE</div>
       </div>
     </div>
-    ${next?`
-    <div style="margin-top:10px">
-      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-        <span style="color:var(--muted);font-size:11px">Ziel: <span style="color:${next.color};font-weight:800">${next.cefr}</span></span>
-        <span style="color:var(--text);font-size:11px;font-weight:700">${mastered}/${next.minCards}</span>
+
+    <!-- Lernpfad progress -->
+    <div style="margin-top:14px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+        <span style="color:var(--muted);font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.5px">
+          Lernpfad
+        </span>
+        <span style="color:${theme.primary};font-size:11px;font-weight:800">
+          ${perfect} / ${total} Perfekt
+        </span>
       </div>
-      <div class="prog-track"><div class="prog-fill" style="width:${Math.min(100,prog)}%;background:linear-gradient(90deg,${level.color},${next.color})"></div></div>
-      <div style="color:var(--muted);font-size:11px;margin-top:3px">Noch <span style="color:var(--gold);font-weight:800">${next.minCards-mastered}</span> Sätze bis ${next.cefr}</div>
-    </div>`:''}
+      <!-- 5-step level dots -->
+      <div style="display:flex;gap:5px;margin-bottom:6px">
+        ${LERNPFAD_LEVELS.map(l => {
+          const reached = pct >= l.minPct;
+          const isCurrent = l.id === level.id;
+          return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">
+            <div style="width:100%;height:6px;border-radius:3px;
+              background:${reached ? theme.primary : 'rgba(255,255,255,0.1)'};
+              ${isCurrent ? 'box-shadow:0 0 8px ' + theme.primary + '66' : ''}"></div>
+            <span style="font-size:9px;color:${isCurrent ? theme.primary : 'var(--muted)'};
+              font-weight:${isCurrent ? '800' : '600'};white-space:nowrap">${l.label}</span>
+          </div>`;
+        }).join('')}
+      </div>
+      ${nextLevel ? `
+      <div style="color:var(--muted);font-size:11px">
+        Nächstes Ziel: <span style="color:${theme.primary};font-weight:800">${nextLevel.emoji} ${nextLevel.label}</span>
+        <span style="color:var(--muted)"> ab ${nextLevel.minPct}%</span>
+        — noch <span style="color:${theme.primary};font-weight:800">${Math.ceil((nextLevel.minPct/100)*total) - perfect}</span> Sätze
+      </div>` : `
+      <div style="color:${theme.primary};font-size:12px;font-weight:800">
+        🏆 Du hast alle Stufen erreicht! Experte!
+      </div>`}
+    </div>
   `;
 
-  // Stats
-  document.getElementById('stat-grid').innerHTML=[
-    {l:'Serie',      v:`${state.streak.count} 🔥`, c:'var(--gold)'},
-    {l:'Gemeistert', v:mastered,                   c:'var(--teal)'},
-    {l:'In Übung',   v:learning,                   c:'var(--purple)'},
-    {l:'Fällig',     v:due,                         c:due>0?'var(--rose)':'var(--muted)'},
-  ].map(s=>`<div class="stat-cell"><div class="stat-val" style="color:${s.c}">${s.v}</div><div class="stat-lbl">${s.l}</div></div>`).join('');
+  // ── Stats row (simplified — no Note grade)
+  document.getElementById('stat-grid').innerHTML = [
+    { label:'Perfekt',   value: perfect,        color: theme.primary },
+    { label:'In Übung',  value: Object.values(state.deck).filter(c=>c.phase==='learning'||c.phase==='review').length, color:'var(--purple)' },
+    { label:'Fällig',    value: dueCount,        color: dueCount > 0 ? 'var(--rose)' : 'var(--muted)' },
+    { label:'Gesamt',    value: total,           color:'var(--muted)' },
+  ].map(s => `
+    <div class="stat-cell">
+      <div class="stat-val" style="color:${s.color}">${s.value}</div>
+      <div class="stat-lbl">${s.label}</div>
+    </div>`
+  ).join('');
 
-  // Start button
-  const btn=document.getElementById('start-btn');
-  btn.style.background=due>0?'linear-gradient(135deg,#FF6B6B,#ff8e53)':'linear-gradient(135deg,#06D6A0,#00b894)';
-  btn.innerHTML=`<span style="font-size:20px">▶</span>${due>0?` ${due} Karten wiederholen`:' Neue Sätze lernen'}`;
+  // ── Daily goal progress + CTA
+  const startBtn = document.getElementById('start-btn');
+  const ctaColor = dueCount > 0
+    ? `linear-gradient(135deg,var(--rose),#ff8e53)`
+    : `linear-gradient(135deg,${theme.primary},${theme.primary}aa)`;
+  const ctaText = isNewUser
+    ? `▶  ${dailyTarget} Sätze lernen`
+    : dueCount > 0
+      ? `▶  ${dueCount} Sätze wiederholen`
+      : `▶  Neue Sätze lernen`;
 
-  // SRS preview
-  const sentences=getAllSentences().slice(0,5);
-  document.getElementById('srs-preview').innerHTML=sentences.map(s=>{
-    const card=state.deck[s.id]; if(!card) return '';
-    const phaseColors={new:'var(--muted)',learning:'var(--gold)',review:'var(--purple)',mastered:'var(--teal)'};
-    const pc=phaseColors[card.phase];
-    const d=isDue(card);
-    return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
-      <div style="width:7px;height:7px;border-radius:4px;flex-shrink:0;background:${pc}"></div>
-      <div style="flex:1;color:var(--text);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.bg}</div>
-      <div style="font-size:10px;font-weight:700;color:${d?'var(--rose)':'var(--muted)'}">${card.phase==='new'?'Neu':formatDue(card.nextDue)}</div>
-    </div>`;
-  }).join('');
-
-  // CEFR ladder
-  document.getElementById('cefr-ladder').innerHTML=LEVELS.map(l=>{
-    const reached=mastered>=l.minCards;
-    const isCurrent=l.cefr===level.cefr;
-    return `<div class="cefr-row" style="background:${isCurrent?l.color+'15':'var(--card)'};border-color:${isCurrent?l.color+'55':'var(--border)'}">
-      <div class="cefr-circle" style="background:${reached?l.color+'28':'rgba(255,255,255,0.04)'};border-color:${reached?l.color:'var(--border)'};color:${reached?l.color:'var(--muted)'}">
-        ${reached?'✓':'○'}
+  startBtn.style.background = ctaColor;
+  startBtn.innerHTML = `
+    <div style="display:flex;flex-direction:column;align-items:center;gap:6px;width:100%">
+      <div style="display:flex;align-items:center;gap:10px;font-size:15px;font-weight:900">
+        <span>▶</span><span>${isNewUser ? dailyTarget + ' Sätze lernen' : dueCount > 0 ? dueCount + ' Sätze wiederholen' : 'Neue Sätze lernen'}</span>
       </div>
-      <div style="flex:1">
-        <div style="display:flex;gap:6px;align-items:center">
-          <span style="color:${reached?l.color:'var(--muted)'};font-size:13px;font-weight:900">${l.cefr}</span>
-          <span style="color:${reached?'var(--text)':'var(--muted)'};font-size:11px;font-weight:700">Note ${l.grade} · ${l.gradeLabel}</span>
-        </div>
-        <div style="color:var(--muted);font-size:10px">${l.desc} · ab ${l.minCards} Sätzen</div>
+      <!-- Daily goal bar -->
+      <div style="width:100%;background:rgba(255,255,255,0.2);border-radius:4px;height:5px">
+        <div style="width:${todayPct}%;height:100%;background:rgba(255,255,255,0.9);
+          border-radius:4px;transition:width 0.5s ease"></div>
       </div>
-      ${isCurrent?`<div style="background:${l.color};border-radius:6px;padding:2px 7px;font-size:9px;font-weight:900;color:#000">DU</div>`:''}
-    </div>`;
-  }).join('');
+      <div style="font-size:11px;font-weight:700;opacity:0.85">
+        ${doneToday} / ${dailyTarget} Sätze heute · Ziel: ${activeProfile?.dailyGoal || 10} Min
+      </div>
+    </div>
+  `;
+
+  // ── Lehrplan Heute (renamed, no sentence list — just summary)
+  document.getElementById('srs-preview').innerHTML = `
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      ${[
+        { dot:'var(--muted)',   label:'Neu',           val: Object.values(state.deck).filter(c=>c.phase==='new').length },
+        { dot:'var(--gold)',    label:'Lernen',        val: Object.values(state.deck).filter(c=>c.phase==='learning').length },
+        { dot:'var(--purple)', label:'Wiederholung',  val: Object.values(state.deck).filter(c=>c.phase==='review').length },
+        { dot:theme.primary,   label:'Perfekt',       val: perfect },
+      ].map(s => `
+        <div style="display:flex;align-items:center;gap:5px;
+          background:rgba(255,255,255,0.05);border-radius:10px;padding:5px 10px">
+          <div style="width:8px;height:8px;border-radius:4px;background:${s.dot}"></div>
+          <span style="color:var(--text);font-size:12px;font-weight:700">${s.val}</span>
+          <span style="color:var(--muted);font-size:11px">${s.label}</span>
+        </div>`
+      ).join('')}
+    </div>
+    <div style="color:var(--muted);font-size:11px;margin-top:10px">
+      Nächste fällige Karte: <span style="color:${theme.primary};font-weight:700">
+        ${dueCount > 0 ? 'Jetzt' : (() => {
+          const next = Object.values(state.deck)
+            .filter(c=>c.phase!=='new'&&c.phase!=='mastered')
+            .sort((a,b)=>a.nextDue-b.nextDue)[0];
+          return next ? formatDue(next.nextDue) : 'Alle gemeistert 🎉';
+        })()}
+      </span>
+    </div>
+  `;
+
+  // ── CEFR ladder hidden — replaced by Lernpfad in avatar section
+  document.getElementById('cefr-ladder').innerHTML = '';
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1373,11 +1512,18 @@ function setLearnMode(mode){
 // LEARN — SENTENCES
 // ═══════════════════════════════════════════════════════════════
 function buildQueue(){
-  const all=getAllSentences();
-  return [
-    ...all.filter(s=>state.deck[s.id]&&state.deck[s.id].phase!=='new'&&isDue(state.deck[s.id])),
-    ...all.filter(s=>state.deck[s.id]&&state.deck[s.id].phase==='new'),
-  ];
+  const all = getAllSentences();
+  const target = getDailyTarget();
+  // Due reviews (not mastered) first, then new sentences up to daily target
+  const due = all.filter(s => {
+    const c = state.deck[s.id];
+    return c && c.phase !== 'new' && c.phase !== 'mastered' && isDue(c);
+  });
+  const newCards = all.filter(s => {
+    const c = state.deck[s.id];
+    return c && c.phase === 'new';
+  }).slice(0, Math.max(0, target - due.length));
+  return [...due, ...newCards];
 }
 
 function renderLearn(){
@@ -1434,7 +1580,7 @@ function renderSentences(){
       <div style="color:var(--muted);font-size:10px;font-weight:800;letter-spacing:1px;text-align:center">WIE WAR DAS? — BEWERTE DICH SELBST</div>
       <div class="rating-row">
         <button class="rating-btn" onclick="learnRate(2)" style="background:rgba(255,107,107,0.22);border:1px solid rgba(255,107,107,0.55);color:var(--rose)">
-          <span class="rb-icon">🔁</span>Schwer 😅<span class="rb-note">Morgen nochmal</span>
+          <span class="rb-icon">🔁</span>Schwer 😅
         </button>
         <button class="rating-btn" onclick="learnRate(4)" style="background:rgba(255,209,102,0.22);border:1px solid rgba(255,209,102,0.55);color:var(--gold)">
           <span class="rb-icon">👍</span>Gut 😊<span class="rb-note">+${nextInterval}d</span>
@@ -1522,9 +1668,14 @@ function learnRecord(){
 function learnRate(quality){
   const current=state.learnQueue[state.learnQIdx%Math.max(1,state.learnQueue.length)];
   if(!current) return;
-  state.deck[current.id]=sm2Update(state.deck[current.id], quality);
+  let updated = sm2Update(state.deck[current.id], quality);
+  // Only mark as mastered on explicit Perfekt rating (quality===5)
+  if(quality < 5 && updated.phase === 'mastered') {
+    updated = { ...updated, phase: 'review' }; // keep in review until Perfekt
+  }
+  state.deck[current.id] = updated;
   LS.save('deck', state.deck);
-  if(quality>=4&&Math.random()>0.55) showGoodie();
+  if(quality===5 && Math.random()>0.45) showGoodie();
   state.learnQIdx++;
   state.learnReps=0;
   state.learnPhase='listen';
@@ -1532,6 +1683,8 @@ function learnRate(quality){
   state.learnTranscript='';
   updateStreakBadge();
   renderSentences();
+  // Live update home counters if home visible
+  if(state.screen==='home') renderHome();
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -2292,12 +2445,22 @@ function getGoal(mins){ return GOALS.find(g=>g.mins===mins)||GOALS[1]; }
 
 // Apply theme colour to CSS variables
 function applyTheme(themeId){
-  const t=getTheme(themeId);
-  document.documentElement.style.setProperty('--primary', t.primary);
-  // Update gradient buttons that use rose/purple
-  document.querySelectorAll('.btn-primary, #start-btn').forEach(el=>{
-    // only update if it's the start button
+  const t = getTheme(themeId);
+  const r = document.documentElement.style;
+  r.setProperty('--primary', t.primary);
+  // Tint card backgrounds slightly toward theme colour
+  r.setProperty('--theme-glow', t.primary + '22');
+  r.setProperty('--theme-border', t.primary + '44');
+  // Update nav active colour
+  document.querySelectorAll('.nav-btn.active .nav-label').forEach(el => {
+    el.style.color = t.primary;
   });
+  document.querySelectorAll('.nav-btn.active .nav-bar').forEach(el => {
+    el.style.background = t.primary;
+  });
+  // Update start button if already rendered
+  const sb = document.getElementById('start-btn');
+  if(sb) renderHome();
 }
 
 // ── ONBOARDING INIT
@@ -2565,14 +2728,23 @@ function deleteProfile(id){
 
 // ── Called when profile is active and app should start
 function onProfileLoaded(profile){
-  activeProfile=profile;
-  // Update greeting
-  document.querySelectorAll('.profile-greeting').forEach(el=>el.textContent='Hallo, '+profile.name+'!');
-  // Update avatar buttons
-  document.querySelectorAll('.profile-avatar-btn').forEach(el=>el.textContent=profile.emoji);
-  // Re-render home
+  activeProfile = profile;
+  applyTheme(profile.themeId);
+  // Update greeting everywhere
+  document.querySelectorAll('.profile-greeting').forEach(el => {
+    el.textContent = profile.name + '!';
+  });
+  // Update avatar buttons everywhere
+  document.querySelectorAll('.profile-avatar-btn').forEach(el => {
+    el.textContent = profile.emoji;
+  });
+  // Sync deck for this profile's sentences
+  syncDeck();
+  updateStreak();
+  updateStreakBadge();
+  // Re-render current screen
   renderHome();
-  renderAdmin();
+  if(state.screen === 'admin') renderAdmin();
 }
 
 // ── BOOT: check for existing profiles
