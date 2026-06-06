@@ -678,6 +678,7 @@
 
     <!-- ══════════ LEARN ══════════ -->
     <div class="screen" id="screen-learn" style="padding:0">
+      <!-- Mode toggle: Sätze / Zahlen -->
       <div class="mode-toggle">
         <button class="mode-btn active" id="mode-sentences" onclick="setLearnMode('sentences')">
           <span>📖</span> Sätze
@@ -686,7 +687,13 @@
           <span>🔢</span> Zahlen
         </button>
       </div>
-      <div id="learn-content" style="flex:1;overflow-y:auto;padding:12px 16px 16px;display:flex;flex-direction:column;gap:11px">
+      <!-- Topic picker (Sätze mode only) -->
+      <div id="topic-picker" style="flex:1;overflow-y:auto;padding:12px 14px 16px">
+        <!-- filled by JS -->
+      </div>
+      <!-- Active learning content (hidden when picking topic) -->
+      <div id="learn-content" style="flex:1;overflow-y:auto;padding:12px 16px 16px;
+        display:none;flex-direction:column;gap:11px">
         <!-- filled by JS -->
       </div>
     </div>
@@ -824,6 +831,20 @@
   </div>
 </div>
 
+<!-- ── Profile Edit Sheet ── -->
+<div id="profil-edit-sheet" style="position:fixed;bottom:0;left:50%;
+  transform:translateX(-50%);width:100%;max-width:430px;
+  background:var(--card);border-radius:22px 22px 0 0;
+  padding:0 18px 32px;border:1px solid var(--border);
+  display:none;z-index:250;max-height:85vh;overflow-y:auto">
+  <div style="width:36px;height:4px;background:var(--border);border-radius:2px;
+    margin:12px auto 14px"></div>
+  <div id="profil-edit-sheet-content"></div>
+</div>
+<div id="profil-edit-backdrop" onclick="closeProfilSheet()"
+  style="position:fixed;inset:0;background:rgba(0,0,0,0.6);
+  display:none;z-index:240"></div>
+
 <!-- ── Toast ── -->
 <div id="toast"></div>
 
@@ -854,41 +875,336 @@ let _nid = 2000;
 function newId(){ return ++_nid; }
 
 const INITIAL_TOPICS = [
-  { id:"begruessing", name:"Begrüßung", emoji:"👋", color:"#FF6B6B", sentences:[
-    {id:1, de:"Hallo, wie heißt du?",                            en:"Hello, what is your name?",                    bg:"Здравей, как се казваш?",                     origin:"original"},
-    {id:2, de:"Ich heiße Maria und ich bin dreizehn Jahre alt.", en:"My name is Maria and I am thirteen years old.", bg:"Казвам се Мария и съм на тринадесет години.", origin:"original"},
-    {id:3, de:"Guten Morgen, wie geht es dir?",                  en:"Good morning, how are you?",                   bg:"Добро утро, как си?",                          origin:"original"},
-    {id:4, de:"Mir geht es gut, danke. Und dir?",                en:"I am fine, thank you. And you?",               bg:"Добре съм, благодаря. А ти?",                  origin:"original"},
-    {id:5, de:"Auf Wiedersehen! Bis morgen!",                    en:"Goodbye! See you tomorrow!",                   bg:"Довиждане! До утре!",                          origin:"original"},
-  ]},
-  { id:"familie", name:"Familie", emoji:"👨‍👩‍👧", color:"#A855F7", sentences:[
-    {id:6,  de:"Meine Familie hat vier Personen.",    en:"My family has four people.",      bg:"Семейството ми има четирима души.", origin:"original"},
-    {id:7,  de:"Meine Mutter ist Lehrerin.",          en:"My mother is a teacher.",         bg:"Майка ми е учителка.",             origin:"original"},
-    {id:8,  de:"Mein Vater arbeitet in einer Firma.", en:"My father works in a company.",   bg:"Баща ми работи в една фирма.",     origin:"original"},
-    {id:9,  de:"Meine Großmutter kocht sehr gut.",    en:"My grandmother cooks very well.", bg:"Баба ми готви много добре.",       origin:"original"},
-    {id:10, de:"Ich habe eine ältere Schwester.",     en:"I have an older sister.",         bg:"Имам по-голяма сестра.",           origin:"original"},
-  ]},
-  { id:"schule", name:"Schule", emoji:"📚", color:"#06D6A0", sentences:[
-    {id:11, de:"Mein Lieblingsfach ist Mathematik.",        en:"My favourite subject is Mathematics.", bg:"Любимият ми предмет е математика.",   origin:"original"},
-    {id:12, de:"Ich habe mein Heft vergessen.",             en:"I forgot my notebook.",                bg:"Забравих тетрадката си.",              origin:"original"},
-    {id:13, de:"Wir haben heute eine Prüfung in Biologie.", en:"We have a Biology exam today.",        bg:"Днес имаме изпит по биология.",        origin:"original"},
-    {id:14, de:"Kannst du mir beim Lernen helfen?",         en:"Can you help me with studying?",       bg:"Можеш ли да ми помогнеш с ученето?",  origin:"original"},
-  ]},
-  { id:"essen", name:"Essen", emoji:"🍽️", color:"#FFD166", sentences:[
-    {id:15, de:"Zum Frühstück esse ich Joghurt mit Honig.",  en:"For breakfast I eat yoghurt with honey.",     bg:"За закуска ям кисело мляко с мед.",       origin:"original"},
-    {id:16, de:"Mein Lieblingsessen ist Pizza.",              en:"My favourite food is pizza.",                 bg:"Любимата ми храна е пица.",               origin:"original"},
-    {id:17, de:"Wir kaufen Obst und Gemüse auf dem Markt.",  en:"We buy fruit and vegetables at the market.", bg:"Купуваме плодове и зеленчуци на пазара.", origin:"original"},
-  ]},
-  { id:"gefuehle", name:"Gefühle", emoji:"💛", color:"#38BDF8", sentences:[
-    {id:18, de:"Ich bin heute sehr glücklich.",          en:"I am very happy today.",             bg:"Днес съм много щастлива.",            origin:"original"},
-    {id:19, de:"Manchmal bin ich müde nach der Schule.", en:"Sometimes I am tired after school.", bg:"Понякога съм уморена след училище.",  origin:"original"},
-    {id:20, de:"Ich vermisse meine Freundin sehr.",      en:"I miss my friend very much.",        bg:"Много ми липсва приятелката ми.",     origin:"original"},
-  ]},
-  { id:"freizeit", name:"Freizeit", emoji:"🎵", color:"#34D399", sentences:[
-    {id:21, de:"In meiner Freizeit lese ich gern Bücher.", en:"In my free time I like reading books.",       bg:"В свободното си време обичам да чета книги.", origin:"original"},
-    {id:22, de:"Ich spiele Gitarre seit drei Jahren.",     en:"I have been playing guitar for three years.", bg:"Свиря на китара от три години.",               origin:"original"},
-  ]},
+  {
+    id: "begruessing",
+    name: "Begrüßung",
+    emoji: "👋",
+    color: "#FF6B6B",
+    sentences: [
+      { id:1,   de:"Hallo, wie heißt du?",                              en:"Hello, what is your name?",                      bg:"Здравей, как се казваш?" },
+      { id:2,   de:"Ich heiße Maria und ich bin dreizehn Jahre alt.",   en:"My name is Maria and I am thirteen years old.",   bg:"Казвам се Мария и съм на тринадесет години." },
+      { id:3,   de:"Guten Morgen, wie geht es dir?",                    en:"Good morning, how are you?",                     bg:"Добро утро, как си?" },
+      { id:4,   de:"Mir geht es gut, danke. Und dir?",                  en:"I am fine, thank you. And you?",                 bg:"Добре съм, благодаря. А ти?" },
+      { id:5,   de:"Auf Wiedersehen! Bis morgen!",                      en:"Goodbye! See you tomorrow!",                     bg:"Довиждане! До утре!" },
+      { id:6,   de:"Gute Nacht, schlaf gut!",                           en:"Good night, sleep well!",                        bg:"Лека нощ, спи добре!" },
+      { id:7,   de:"Ich freue mich, dich kennenzulernen.",              en:"I am happy to meet you.",                        bg:"Радвам се да се запознаем." },
+      { id:8,   de:"Wo wohnst du?",                                     en:"Where do you live?",                             bg:"Къде живееш?" },
+      { id:9,   de:"Ich wohne in Sofia, der Hauptstadt Bulgariens.",    en:"I live in Sofia, the capital of Bulgaria.",      bg:"Живея в София, столицата на България." },
+      { id:10,  de:"Sprichst du Deutsch oder Englisch?",                en:"Do you speak German or English?",                bg:"Говориш ли немски или английски?" },
+    ]
+  },
+  {
+    id: "familie",
+    name: "Familie",
+    emoji: "👨‍👩‍👧",
+    color: "#A855F7",
+    sentences: [
+      { id:11,  de:"Meine Familie hat vier Personen.",                   en:"My family has four people.",                     bg:"Семейството ми има четирима души." },
+      { id:12,  de:"Ich habe eine ältere Schwester und einen jüngeren Bruder.", en:"I have an older sister and a younger brother.", bg:"Имам по-голяма сестра и по-малък брат." },
+      { id:13,  de:"Meine Mutter ist Lehrerin.",                        en:"My mother is a teacher.",                        bg:"Майка ми е учителка." },
+      { id:14,  de:"Mein Vater arbeitet in einer Firma.",               en:"My father works in a company.",                  bg:"Баща ми работи в една фирма." },
+      { id:15,  de:"Meine Großmutter kocht sehr gut.",                  en:"My grandmother cooks very well.",                bg:"Баба ми готви много добре." },
+      { id:16,  de:"Mein Großvater liest jeden Tag Zeitung.",           en:"My grandfather reads the newspaper every day.",  bg:"Дядо ми чете вестник всеки ден." },
+      { id:17,  de:"Gestern hat meine Mutter Geburtstag gefeiert.",     en:"Yesterday my mother celebrated her birthday.",   bg:"Вчера майка ми отпразнува рождения си ден." },
+      { id:18,  de:"Meine Tante hat mir ein Geschenk gegeben.",         en:"My aunt gave me a gift.",                        bg:"Леля ми ми даде подарък." },
+      { id:19,  de:"Nächste Woche besuchen wir unsere Cousine.",        en:"Next week we will visit our cousin.",            bg:"Следващата седмица ще посетим нашата братовчедка." },
+      { id:20,  de:"Mein Onkel wohnt in einer anderen Stadt.",          en:"My uncle lives in another city.",                bg:"Чичо ми живее в друг град." },
+    ]
+  },
+  {
+    id: "zahlen",
+    name: "Zahlen",
+    emoji: "🔢",
+    color: "#FFD166",
+    sentences: [
+      { id:21,  de:"Ich habe fünf Äpfel gekauft.",                      en:"I bought five apples.",                          bg:"Купих пет ябълки." },
+      { id:22,  de:"Es gibt zwölf Monate im Jahr.",                     en:"There are twelve months in a year.",             bg:"В годината има дванадесет месеца." },
+      { id:23,  de:"Sie hat zwanzig Euro in ihrer Tasche.",             en:"She has twenty euros in her bag.",               bg:"Тя има двадесет евро в чантата си." },
+      { id:24,  de:"Das Buch kostet fünfzehn Euro.",                    en:"The book costs fifteen euros.",                  bg:"Книгата струва петнадесет евро." },
+      { id:25,  de:"Meine Schule hat fünfhundert Schüler.",             en:"My school has five hundred students.",           bg:"Моето училище има петстотин ученика." },
+      { id:26,  de:"Es sind dreißig Schüler in unserer Klasse.",        en:"There are thirty students in our class.",        bg:"В нашия клас има тридесет ученика." },
+      { id:27,  de:"Ich werde morgen elf Jahre alt.",                   en:"Tomorrow I will turn eleven years old.",         bg:"Утре ще стана на единадесет години." },
+      { id:28,  de:"Der Film dauert neunzig Minuten.",                  en:"The film lasts ninety minutes.",                 bg:"Филмът продължава деветдесет минути." },
+      { id:29,  de:"Wir haben hundert Aufgaben für die Ferien.",        en:"We have one hundred tasks for the holidays.",    bg:"Имаме сто задачи за ваканцията." },
+      { id:30,  de:"Es sind sieben Tage in einer Woche.",               en:"There are seven days in a week.",               bg:"В седмицата има седем дни." },
+      { id:31,  de:"Das Konzert beginnt um achtzehn Uhr.",              en:"The concert starts at six o'clock in the evening.", bg:"Концертът започва в осемнадесет часа." },
+      { id:32,  de:"Sie hat tausend Follower auf Instagram.",           en:"She has one thousand followers on Instagram.",   bg:"Тя има хиляда последователи в Инстаграм." },
+      { id:33,  de:"Es gibt vierzig Seiten in diesem Heft.",            en:"There are forty pages in this notebook.",       bg:"В тази тетрадка има четиридесет страници." },
+      { id:34,  de:"Wir kaufen drei Flaschen Wasser.",                  en:"We buy three bottles of water.",                bg:"Купуваме три бутилки вода." },
+      { id:35,  de:"Es sind sechzig Sekunden in einer Minute.",         en:"There are sixty seconds in a minute.",          bg:"В минутата има шестдесет секунди." },
+    ]
+  },
+  {
+    id: "schule",
+    name: "Schule",
+    emoji: "📚",
+    color: "#06D6A0",
+    sentences: [
+      { id:36,  de:"Ich gehe jeden Morgen um acht Uhr in die Schule.",  en:"I go to school every morning at eight o'clock.", bg:"Всяка сутрин ходя на училище в осем часа." },
+      { id:37,  de:"Mein Lieblingsfach ist Mathematik.",                en:"My favourite subject is Mathematics.",           bg:"Любимият ми предмет е математика." },
+      { id:38,  de:"Wir haben heute eine Prüfung in Biologie.",         en:"We have a Biology exam today.",                  bg:"Днес имаме изпит по биология." },
+      { id:39,  de:"Die Lehrerin hat uns viele Hausaufgaben gegeben.",  en:"The teacher gave us a lot of homework.",         bg:"Учителката ни даде много домашна работа." },
+      { id:40,  de:"Ich habe mein Heft vergessen.",                     en:"I forgot my notebook.",                          bg:"Забравих тетрадката си." },
+      { id:41,  de:"Kannst du mir beim Lernen helfen?",                 en:"Can you help me with studying?",                bg:"Можеш ли да ми помогнеш с ученето?" },
+      { id:42,  de:"Wir haben in der nächsten Stunde Sport.",           en:"We have PE next lesson.",                        bg:"В следващия час имаме физическо." },
+      { id:43,  de:"Die Bibliothek ist neben dem Klassenzimmer.",       en:"The library is next to the classroom.",          bg:"Библиотеката е до класната стая." },
+      { id:44,  de:"Ich habe eine sehr gute Note in Englisch bekommen.", en:"I got a very good grade in English.",           bg:"Получих много добра оценка по английски." },
+      { id:45,  de:"Der Unterricht beginnt um Viertel nach acht.",      en:"The lesson starts at a quarter past eight.",     bg:"Урокът започва в четвърт след осем." },
+      { id:46,  de:"Wir lernen gerade über die Geschichte Bulgariens.", en:"We are learning about the history of Bulgaria.", bg:"Учим за историята на България." },
+      { id:47,  de:"Meine Freundin und ich sitzen zusammen in der Klasse.", en:"My friend and I sit together in class.",    bg:"Приятелката ми и аз седим заедно в клас." },
+      { id:48,  de:"Morgen werden wir einen Ausflug machen.",           en:"Tomorrow we will go on a school trip.",          bg:"Утре ще направим екскурзия." },
+      { id:49,  de:"Ich habe gestern die ganze Nacht gelernt.",         en:"I studied all night yesterday.",                 bg:"Вчера учих цяла нощ." },
+      { id:50,  de:"Nach der Schule gehe ich in den Sportverein.",      en:"After school I go to the sports club.",          bg:"След училище ходя в спортния клуб." },
+    ]
+  },
+  {
+    id: "essen",
+    name: "Essen & Trinken",
+    emoji: "🍽️",
+    color: "#FB923C",
+    sentences: [
+      { id:51,  de:"Zum Frühstück esse ich Joghurt mit Honig.",         en:"For breakfast I eat yoghurt with honey.",        bg:"За закуска ям кисело мляко с мед." },
+      { id:52,  de:"Mein Lieblingsessen ist Pizza.",                    en:"My favourite food is pizza.",                    bg:"Любимата ми храна е пица." },
+      { id:53,  de:"Kannst du mir bitte das Salz geben?",               en:"Can you please pass me the salt?",              bg:"Можеш ли да ми подадеш солта, моля?" },
+      { id:54,  de:"Ich trinke jeden Morgen ein Glas Orangensaft.",     en:"I drink a glass of orange juice every morning.", bg:"Всяка сутрин пия чаша портокалов сок." },
+      { id:55,  de:"Das Mittagessen ist um dreizehn Uhr fertig.",       en:"Lunch is ready at one o'clock.",                 bg:"Обядът е готов в тринадесет часа." },
+      { id:56,  de:"Heute Abend machen wir Salat und Suppe.",           en:"This evening we are making salad and soup.",     bg:"Довечера правим салата и супа." },
+      { id:57,  de:"Ich mag keine Zwiebeln, aber ich esse gern Tomaten.", en:"I don't like onions, but I like eating tomatoes.", bg:"Не обичам лук, но обичам да ям домати." },
+      { id:58,  de:"Wir haben gestern Abend zusammen gegessen.",        en:"We ate together yesterday evening.",             bg:"Вчера вечер ядохме заедно." },
+      { id:59,  de:"Das Brot ist frisch aus dem Ofen.",                 en:"The bread is fresh from the oven.",              bg:"Хлябът е пресен от фурната." },
+      { id:60,  de:"Zum Nachtisch möchte ich Eis, bitte.",              en:"For dessert I would like ice cream, please.",    bg:"За десерт искам сладолед, моля." },
+      { id:61,  de:"Morgen werden wir zusammen Kuchen backen.",         en:"Tomorrow we will bake a cake together.",         bg:"Утре ще печем торта заедно." },
+      { id:62,  de:"Das Restaurant ist um die Ecke.",                   en:"The restaurant is around the corner.",           bg:"Ресторантът е зад ъгъла." },
+      { id:63,  de:"Ich bin vegetarisch und esse kein Fleisch.",        en:"I am vegetarian and I don't eat meat.",          bg:"Аз съм вегетарианка и не ям месо." },
+      { id:64,  de:"Das Wasser kocht schon.",                           en:"The water is already boiling.",                  bg:"Водата вече кипи." },
+      { id:65,  de:"Wir kaufen Obst und Gemüse auf dem Markt.",        en:"We buy fruit and vegetables at the market.",     bg:"Купуваме плодове и зеленчуци на пазара." },
+    ]
+  },
+  {
+    id: "freizeit",
+    name: "Freizeit & Hobbys",
+    emoji: "🎵",
+    color: "#34D399",
+    sentences: [
+      { id:66,  de:"In meiner Freizeit lese ich gern Bücher.",          en:"In my free time I like reading books.",          bg:"В свободното си време обичам да чета книги." },
+      { id:67,  de:"Ich spiele Gitarre seit drei Jahren.",              en:"I have been playing guitar for three years.",    bg:"Свиря на китара от три години." },
+      { id:68,  de:"Am Wochenende gehe ich schwimmen.",                 en:"At the weekend I go swimming.",                  bg:"През уикенда ходя да плувам." },
+      { id:69,  de:"Meine Freundin und ich machen zusammen Yoga.",      en:"My friend and I do yoga together.",              bg:"Приятелката ми и аз правим йога заедно." },
+      { id:70,  de:"Ich zeichne sehr gern Porträts.",                   en:"I really like drawing portraits.",               bg:"Много обичам да рисувам портрети." },
+      { id:71,  de:"Wir haben gestern einen guten Film geschaut.",      en:"We watched a good film yesterday.",              bg:"Вчера гледахме добър филм." },
+      { id:72,  de:"Ich lerne gerade, wie man tanzt.",                  en:"I am currently learning how to dance.",          bg:"Сега уча как се танцува." },
+      { id:73,  de:"Nächstes Jahr werde ich mit dem Reiten anfangen.",  en:"Next year I will start horse riding.",           bg:"Следващата година ще започна да яздя коне." },
+      { id:74,  de:"Ich fotografiere gern Blumen und Tiere.",           en:"I like taking photos of flowers and animals.",   bg:"Обичам да снимам цветя и животни." },
+      { id:75,  de:"Meine Schwester und ich spielen zusammen Schach.",  en:"My sister and I play chess together.",           bg:"Сестра ми и аз играем шах заедно." },
+      { id:76,  de:"Wir haben heute eine neue Musikgruppe gefunden.",   en:"Today we discovered a new music group.",         bg:"Днес открихме нова музикална група." },
+      { id:77,  de:"Jeden Freitag schauen wir zusammen Serien.",        en:"Every Friday we watch TV series together.",      bg:"Всеки петък гледаме сериали заедно." },
+      { id:78,  de:"Ich backe gern Kekse mit meiner Mutter.",           en:"I like baking cookies with my mother.",          bg:"Обичам да правя бисквити с майка ми." },
+      { id:79,  de:"Morgen werden wir ins Theater gehen.",              en:"Tomorrow we will go to the theatre.",            bg:"Утре ще отидем на театър." },
+      { id:80,  de:"Ich habe gerade ein neues Buch angefangen.",        en:"I have just started a new book.",                bg:"Току-що започнах нова книга." },
+    ]
+  },
+  {
+    id: "gesundheit",
+    name: "Gesundheit",
+    emoji: "💊",
+    color: "#F472B6",
+    sentences: [
+      { id:81,  de:"Ich fühle mich heute nicht gut.",                   en:"I do not feel well today.",                      bg:"Днес не се чувствам добре." },
+      { id:82,  de:"Mein Kopf tut weh.",                                en:"My head hurts.",                                 bg:"Боли ме глава." },
+      { id:83,  de:"Der Arzt hat mir Tabletten verschrieben.",          en:"The doctor prescribed me tablets.",              bg:"Лекарят ми предписа таблетки." },
+      { id:84,  de:"Du solltest mehr Wasser trinken.",                  en:"You should drink more water.",                   bg:"Трябва да пиеш повече вода." },
+      { id:85,  de:"Ich schlafe normalerweise acht Stunden pro Nacht.", en:"I normally sleep eight hours a night.",          bg:"Обикновено спя осем часа на нощ." },
+      { id:86,  de:"Sport ist wichtig für die Gesundheit.",             en:"Sport is important for health.",                 bg:"Спортът е важен за здравето." },
+      { id:87,  de:"Ich hatte letzte Woche Fieber.",                    en:"I had a fever last week.",                       bg:"Миналата седмица имах температура." },
+      { id:88,  de:"Meine Zähne putze ich zweimal am Tag.",             en:"I brush my teeth twice a day.",                  bg:"Мия зъбите си два пъти на ден." },
+      { id:89,  de:"Das Krankenhaus ist in der Nähe.",                  en:"The hospital is nearby.",                        bg:"Болницата е наблизо." },
+      { id:90,  de:"Trinke deinen Tee, er ist gut für dich.",           en:"Drink your tea, it is good for you.",            bg:"Изпий чая си, той е полезен за теб." },
+    ]
+  },
+  {
+    id: "mode",
+    name: "Mode & Einkaufen",
+    emoji: "👗",
+    color: "#EC4899",
+    sentences: [
+      { id:91,  de:"Ich brauche neue Schuhe für die Schule.",           en:"I need new shoes for school.",                   bg:"Имам нужда от нови обувки за училище." },
+      { id:92,  de:"Welche Farbe gefällt dir besser – blau oder grün?", en:"Which colour do you prefer – blue or green?",   bg:"Коя цвят ти харесва повече – синьо или зелено?" },
+      { id:93,  de:"Das rote Kleid ist sehr schön.",                    en:"The red dress is very beautiful.",               bg:"Червената рокля е много красива." },
+      { id:94,  de:"Ich habe gestern eine neue Jacke gekauft.",         en:"I bought a new jacket yesterday.",               bg:"Вчера купих ново яке." },
+      { id:95,  de:"Das kostet zu viel. Gibt es etwas Günstigeres?",    en:"That costs too much. Is there something cheaper?", bg:"Това струва твърде много. Има ли нещо по-евтино?" },
+      { id:96,  de:"Wir gehen am Samstag in die Stadt zum Einkaufen.", en:"We are going shopping in town on Saturday.",     bg:"В събота ходим в града за пазаруване." },
+      { id:97,  de:"Ich trage gern bequeme Kleidung.",                  en:"I like wearing comfortable clothes.",            bg:"Обичам да нося удобни дрехи." },
+      { id:98,  de:"Der Laden schließt um zwanzig Uhr.",                en:"The shop closes at eight in the evening.",       bg:"Магазинът затваря в двадесет часа." },
+      { id:99,  de:"Kann ich das bitte anprobieren?",                   en:"Can I try this on, please?",                     bg:"Мога ли да го пробвам, моля?" },
+      { id:100, de:"Diese Hose ist mir zu groß.",                       en:"These trousers are too big for me.",             bg:"Тези панталони са ми твърде големи." },
+      { id:101, de:"Ich spare mein Taschengeld für einen neuen Rucksack.", en:"I am saving my pocket money for a new backpack.", bg:"Спестявам джобните си пари за нова раница." },
+      { id:102, de:"Das T-Shirt ist aus Baumwolle.",                    en:"The T-shirt is made of cotton.",                 bg:"Тениската е от памук." },
+      { id:103, de:"Wir haben fünfzig Prozent Rabatt bekommen.",        en:"We got fifty percent off.",                      bg:"Получихме петдесет процента отстъпка." },
+    ]
+  },
+  {
+    id: "natur",
+    name: "Natur & Wetter",
+    emoji: "🌿",
+    color: "#4ADE80",
+    sentences: [
+      { id:104, de:"Heute scheint die Sonne und es ist warm.",          en:"Today the sun is shining and it is warm.",       bg:"Днес грее слънце и е топло." },
+      { id:105, de:"Gestern hat es den ganzen Tag geregnet.",           en:"Yesterday it rained all day.",                   bg:"Вчера валя дъжд цял ден." },
+      { id:106, de:"Im Winter schneit es oft in den Bergen.",           en:"In winter it often snows in the mountains.",     bg:"През зимата в планините често вали сняг." },
+      { id:107, de:"Die Blumen blühen im Frühling.",                    en:"The flowers bloom in spring.",                   bg:"Цветята цъфтят напролет." },
+      { id:108, de:"Der Wald ist voller Tiere und Vögel.",              en:"The forest is full of animals and birds.",       bg:"Гората е пълна с животни и птици." },
+      { id:109, de:"Das Meer ist heute ruhig und blau.",                en:"The sea is calm and blue today.",                bg:"Морето е спокойно и синьо днес." },
+      { id:110, de:"Wir sind gestern in die Berge gewandert.",          en:"Yesterday we went hiking in the mountains.",     bg:"Вчера ходихме на поход в планината." },
+      { id:111, de:"Es wird morgen wahrscheinlich regnen.",             en:"It will probably rain tomorrow.",                bg:"Утре вероятно ще вали дъжд." },
+      { id:112, de:"Die Sterne sind heute Nacht sehr hell.",            en:"The stars are very bright tonight.",             bg:"Звездите са много ярки тази нощ." },
+      { id:113, de:"Im Sommer gehen wir ans Meer.",                     en:"In summer we go to the sea.",                    bg:"През лятото ходим на море." },
+      { id:114, de:"Ich liebe es, wenn es draußen schneit.",            en:"I love it when it snows outside.",               bg:"Обичам, когато навън вали сняг." },
+      { id:115, de:"Der Fluss fließt durch die Stadt.",                 en:"The river flows through the city.",              bg:"Реката тече през града." },
+    ]
+  },
+  {
+    id: "zuhause",
+    name: "Zuhause & Alltag",
+    emoji: "🏠",
+    color: "#38BDF8",
+    sentences: [
+      { id:116, de:"Ich stehe jeden Morgen um sieben Uhr auf.",         en:"I get up every morning at seven o'clock.",       bg:"Ставам всяка сутрин в седем часа." },
+      { id:117, de:"Ich putze mir die Zähne und wasche mein Gesicht.", en:"I brush my teeth and wash my face.",             bg:"Мия зъбите си и измивам лицето си." },
+      { id:118, de:"Mein Zimmer ist im zweiten Stock.",                 en:"My room is on the second floor.",                bg:"Стаята ми е на втория етаж." },
+      { id:119, de:"Ich räume jeden Freitag mein Zimmer auf.",         en:"I tidy my room every Friday.",                   bg:"Всеки петък оправям стаята си." },
+      { id:120, de:"Die Küche ist neben dem Wohnzimmer.",              en:"The kitchen is next to the living room.",        bg:"Кухнята е до хола." },
+      { id:121, de:"Wir haben gestern das Badezimmer geputzt.",        en:"We cleaned the bathroom yesterday.",             bg:"Вчера почистихме банята." },
+      { id:122, de:"Ich helfe meiner Mutter beim Kochen.",             en:"I help my mother with cooking.",                 bg:"Помагам на майка ми при готвенето." },
+      { id:123, de:"Der Hund schläft auf dem Sofa.",                   en:"The dog sleeps on the sofa.",                    bg:"Кучето спи на дивана." },
+      { id:124, de:"Wir haben eine große Terrasse mit Blumen.",        en:"We have a big terrace with flowers.",            bg:"Имаме голяма тераса с цветя." },
+      { id:125, de:"Abends lerne ich und höre Musik.",                 en:"In the evening I study and listen to music.",    bg:"Вечер уча и слушам музика." },
+      { id:126, de:"Die Waschmaschine ist voll. Ich mache sie an.",    en:"The washing machine is full. I am turning it on.", bg:"Пералнята е пълна. Пускам я." },
+      { id:127, de:"Ich schlafe um zweiundzwanzig Uhr ein.",           en:"I fall asleep at ten o'clock at night.",         bg:"Заспивам в двадесет и два часа." },
+      { id:128, de:"Wir haben einen Garten hinter dem Haus.",          en:"We have a garden behind the house.",             bg:"Имаме градина зад къщата." },
+      { id:129, de:"Morgen früh werden wir das Haus verlassen.",       en:"Tomorrow morning we will leave the house.",      bg:"Утре сутринта ще напуснем къщата." },
+      { id:130, de:"Ich habe meine Hausaufgaben nach dem Abendessen gemacht.", en:"I did my homework after dinner.",        bg:"Направих домашните си след вечеря." },
+    ]
+  },
+  {
+    id: "unterwegs",
+    name: "Unterwegs & Stadt",
+    emoji: "🚌",
+    color: "#FBBF24",
+    sentences: [
+      { id:131, de:"Wir fahren mit dem Bus zur Schule.",                en:"We go to school by bus.",                        bg:"Ходим на училище с автобус." },
+      { id:132, de:"Die U-Bahn ist schneller als der Bus.",             en:"The metro is faster than the bus.",              bg:"Метрото е по-бързо от автобуса." },
+      { id:133, de:"Mein Vater fährt jeden Tag mit dem Auto zur Arbeit.", en:"My father drives to work every day.",          bg:"Баща ми кара кола до работа всеки ден." },
+      { id:134, de:"Die Apotheke ist geradeaus und dann links.",        en:"The pharmacy is straight ahead and then left.",  bg:"Аптеката е право напред и после наляво." },
+      { id:135, de:"Wir sind mit dem Zug nach Sofia gefahren.",        en:"We travelled to Sofia by train.",                bg:"Пътувахме до София с влак." },
+      { id:136, de:"Das Flugzeug fliegt morgen um neun Uhr ab.",       en:"The plane departs tomorrow at nine o'clock.",    bg:"Самолетът излита утре в девет часа." },
+      { id:137, de:"Es gibt viele Autos auf der Straße.",              en:"There are many cars on the street.",             bg:"На улицата има много коли." },
+      { id:138, de:"Die Bushaltestelle ist fünf Minuten zu Fuß entfernt.", en:"The bus stop is five minutes on foot.",      bg:"Автобусната спирка е на пет минути пеш." },
+      { id:139, de:"Wir haben uns in der Stadt verlaufen.",            en:"We got lost in the city.",                       bg:"Изгубихме се в града." },
+      { id:140, de:"Das Krankenhaus ist auf der rechten Seite.",       en:"The hospital is on the right side.",             bg:"Болницата е от дясната страна." },
+      { id:141, de:"Der Park ist sehr groß und hat viele Bänke.",      en:"The park is very large and has many benches.",   bg:"Паркът е много голям и има много пейки." },
+      { id:142, de:"Ich fahre gern Fahrrad in der Stadt.",             en:"I like riding a bike in the city.",              bg:"Обичам да карам колело в града." },
+    ]
+  },
+  {
+    id: "gefuehle",
+    name: "Gefühle & Emotionen",
+    emoji: "💛",
+    color: "#F59E0B",
+    sentences: [
+      { id:143, de:"Ich bin heute sehr glücklich.",                     en:"I am very happy today.",                         bg:"Днес съм много щастлива." },
+      { id:144, de:"Sie war traurig, weil sie die Prüfung nicht bestanden hat.", en:"She was sad because she did not pass the exam.", bg:"Тя беше тъжна, защото не положи изпита." },
+      { id:145, de:"Ich bin aufgeregt wegen des Konzerts morgen.",      en:"I am excited about the concert tomorrow.",       bg:"Развълнувана съм заради концерта утре." },
+      { id:146, de:"Er hat sich bei ihr entschuldigt.",                 en:"He apologised to her.",                          bg:"Той се извини на нея." },
+      { id:147, de:"Ich war sehr überrascht von ihrem Besuch.",         en:"I was very surprised by her visit.",             bg:"Много се изненадах от нейното посещение." },
+      { id:148, de:"Manchmal bin ich müde nach der Schule.",            en:"Sometimes I am tired after school.",             bg:"Понякога съм уморена след училище." },
+      { id:149, de:"Sie lacht immer, wenn sie glücklich ist.",          en:"She always laughs when she is happy.",           bg:"Тя винаги се смее, когато е щастлива." },
+      { id:150, de:"Ich war wütend, aber ich habe ruhig geblieben.",    en:"I was angry but I stayed calm.",                 bg:"Бях ядосана, но останах спокойна." },
+      { id:151, de:"Es tut mir leid, das war mein Fehler.",             en:"I am sorry, that was my mistake.",               bg:"Съжалявам, това беше моята грешка." },
+      { id:152, de:"Ich vermisse meine Freundin sehr.",                 en:"I miss my friend very much.",                    bg:"Много ми липсва приятелката ми." },
+      { id:153, de:"Ich mache mir Sorgen um die Prüfung.",              en:"I am worried about the exam.",                   bg:"Тревожа се за изпита." },
+      { id:154, de:"Sie ist stolz auf ihre Leistungen.",                en:"She is proud of her achievements.",              bg:"Тя е горда с постиженията си." },
+      { id:155, de:"Ich fühle mich viel besser als gestern.",           en:"I feel much better than yesterday.",             bg:"Чувствам се много по-добре от вчера." },
+    ]
+  },
+  {
+    id: "technologie",
+    name: "Technologie",
+    emoji: "📱",
+    color: "#818CF8",
+    sentences: [
+      { id:156, de:"Ich habe meiner Freundin eine Nachricht geschickt.", en:"I sent my friend a message.",                  bg:"Изпратих съобщение на приятелката си." },
+      { id:157, de:"Das Internet ist heute sehr langsam.",              en:"The internet is very slow today.",               bg:"Интернетът е много бавен днес." },
+      { id:158, de:"Ich lade gern Videos auf YouTube hoch.",            en:"I like uploading videos to YouTube.",            bg:"Обичам да качвам видеа в YouTube." },
+      { id:159, de:"Mein Handy hat keinen Akku mehr.",                  en:"My phone has no battery left.",                  bg:"Телефонът ми няма повече батерия." },
+      { id:160, de:"Kannst du mir das Passwort geben?",                 en:"Can you give me the password?",                  bg:"Можеш ли да ми дадеш паролата?" },
+      { id:161, de:"Ich habe gestern einen neuen Podcast entdeckt.",    en:"Yesterday I discovered a new podcast.",          bg:"Вчера открих нов подкаст." },
+      { id:162, de:"Wir haben uns per Videoanruf unterhalten.",         en:"We talked via video call.",                      bg:"Разговаряхме чрез видео разговор." },
+      { id:163, de:"Sie hat das Foto bearbeitet und hochgeladen.",      en:"She edited the photo and uploaded it.",          bg:"Тя редактира снимката и я качи." },
+      { id:164, de:"Ich werde morgen meinen Account erstellen.",        en:"Tomorrow I will create my account.",             bg:"Утре ще създам своя акаунт." },
+      { id:165, de:"Das Spiel hat über eine Million Spieler.",          en:"The game has over one million players.",         bg:"Играта има над един милион играчи." },
+    ]
+  },
+  {
+    id: "reisen",
+    name: "Reisen & Urlaub",
+    emoji: "✈️",
+    color: "#22D3EE",
+    sentences: [
+      { id:166, de:"Wir fahren diesen Sommer nach Bulgarien.",          en:"We are going to Bulgaria this summer.",          bg:"Това лято заминаваме за България." },
+      { id:167, de:"Ich habe meinen Koffer schon gepackt.",             en:"I have already packed my suitcase.",             bg:"Вече наредих куфара си." },
+      { id:168, de:"Das Hotel liegt direkt am Strand.",                 en:"The hotel is right on the beach.",               bg:"Хотелът се намира точно на плажа." },
+      { id:169, de:"Wir haben drei Nächte in Varna verbracht.",         en:"We spent three nights in Varna.",               bg:"Прекарахме три нощи във Варна." },
+      { id:170, de:"Der Strand war wunderschön und das Wasser war warm.", en:"The beach was beautiful and the water was warm.", bg:"Плажът беше прекрасен и водата беше топла." },
+      { id:171, de:"Ich habe viele Fotos von der Reise gemacht.",       en:"I took many photos on the trip.",                bg:"Направих много снимки от пътуването." },
+      { id:172, de:"Nächstes Jahr werden wir nach England fliegen.",    en:"Next year we will fly to England.",              bg:"Следващата година ще летим за Англия." },
+      { id:173, de:"Ich kaufe immer Souvenirs für meine Freundinnen.",  en:"I always buy souvenirs for my friends.",         bg:"Винаги купувам сувенири за приятелките си." },
+      { id:174, de:"Die Altstadt war sehr beeindruckend.",              en:"The old town was very impressive.",              bg:"Старият град беше много впечатляващ." },
+      { id:175, de:"Wir sind mit dem Schiff gefahren.",                 en:"We travelled by ship.",                          bg:"Пътувахме с кораб." },
+      { id:176, de:"Das Wetter auf Urlaub war perfekt.",                en:"The weather on holiday was perfect.",            bg:"Времето на почивка беше перфектно." },
+      { id:177, de:"Ich freue mich schon auf die nächste Reise.",       en:"I am already looking forward to the next trip.", bg:"Вече се радвам на следващото пътуване." },
+    ]
+  },
+  {
+    id: "tiere",
+    name: "Tiere",
+    emoji: "🐾",
+    color: "#A78BFA",
+    sentences: [
+      { id:178, de:"Wir haben einen Hund und zwei Katzen zuhause.",     en:"We have a dog and two cats at home.",            bg:"У дома имаме куче и две котки." },
+      { id:179, de:"Meine Katze schläft den ganzen Tag.",               en:"My cat sleeps all day.",                         bg:"Котката ми спи цял ден." },
+      { id:180, de:"Der Hund bellt, wenn jemand an der Tür klingelt.",  en:"The dog barks when someone rings the doorbell.", bg:"Кучето лае, когато някой позвони на вратата." },
+      { id:181, de:"Wir füttern die Vögel im Winter.",                  en:"We feed the birds in winter.",                   bg:"Храним птиците през зимата." },
+      { id:182, de:"Im Zoo haben wir Elefanten und Löwen gesehen.",     en:"At the zoo we saw elephants and lions.",         bg:"В зоопарка видяхме слонове и лъвове." },
+      { id:183, de:"Meine Freundin hat einen kleinen weißen Hasen.",    en:"My friend has a small white rabbit.",            bg:"Приятелката ми има малко бяло зайче." },
+      { id:184, de:"Das Pferd ist ein schönes Tier.",                   en:"The horse is a beautiful animal.",               bg:"Конят е красиво животно." },
+      { id:185, de:"Ich habe Angst vor Spinnen.",                       en:"I am scared of spiders.",                        bg:"Страх ме е от паяци." },
+    ]
+  },
+  {
+    id: "zukunft",
+    name: "Zukunftspläne",
+    emoji: "🌟",
+    color: "#F97316",
+    sentences: [
+      { id:186, de:"Wenn ich groß bin, möchte ich Ärztin werden.",      en:"When I grow up, I want to become a doctor.",     bg:"Когато пораснах, искам да стана лекарка." },
+      { id:187, de:"Ich werde nächstes Jahr in die neunte Klasse kommen.", en:"Next year I will be in the ninth grade.",     bg:"Следващата година ще вляза в девети клас." },
+      { id:188, de:"Mein Traum ist es, die Welt zu bereisen.",           en:"My dream is to travel the world.",               bg:"Моята мечта е да обиколя света." },
+      { id:189, de:"Ich will Sprachen lernen: Deutsch, Englisch und Bulgarisch.", en:"I want to learn languages: German, English and Bulgarian.", bg:"Искам да уча езици: немски, английски и български." },
+      { id:190, de:"Eines Tages werde ich mein eigenes Haus haben.",    en:"One day I will have my own house.",              bg:"Един ден ще имам собствена къща." },
+      { id:191, de:"Ich werde hart arbeiten, um meine Ziele zu erreichen.", en:"I will work hard to achieve my goals.",      bg:"Ще работя усърдно, за да постигна целите си." },
+      { id:192, de:"Sie möchte Musikerin werden und auf der Bühne stehen.", en:"She wants to become a musician and perform on stage.", bg:"Тя иска да стане музикантка и да стои на сцената." },
+      { id:193, de:"Nächsten Monat beginnen die Sommerferien.",          en:"Next month the summer holidays begin.",          bg:"Следващия месец започват летните ваканции." },
+      { id:194, de:"Wir planen, eine neue Sprache zusammen zu lernen.", en:"We plan to learn a new language together.",      bg:"Планираме да учим нов език заедно." },
+      { id:195, de:"Ich werde immer für meine Familie da sein.",         en:"I will always be there for my family.",          bg:"Винаги ще бъда до семейството си." },
+      { id:196, de:"Sie hat sich vorgenommen, jeden Tag zu laufen.",     en:"She has decided to run every day.",              bg:"Тя си е наредила да тича всеки ден." },
+      { id:197, de:"Ich werde ein Tagebuch auf Bulgarisch schreiben.",   en:"I will write a diary in Bulgarian.",             bg:"Ще пиша дневник на български език." },
+      { id:198, de:"Nächste Woche werde ich mit dem Klavierspielen anfangen.", en:"Next week I will start playing the piano.", bg:"Следващата седмица ще започна да свиря на пиано." },
+      { id:199, de:"Ich glaube, dass ich eines Tages in Bulgarien leben werde.", en:"I believe that one day I will live in Bulgaria.", bg:"Вярвам, че един ден ще живея в България." },
+      { id:200, de:"Wir werden immer Freundinnen sein, egal wo wir sind.", en:"We will always be friends, no matter where we are.", bg:"Ще бъдем завинаги приятелки, без значение къде сме." },
+    ]
+  },
 ];
+
 
 const CITIES = [
   {name:"Sofia",    emoji:"🏙️", unlockAt:0,  fact:"Sofia ist die älteste Hauptstadt Europas — über 7.000 Jahre Geschichte!"},
@@ -1120,11 +1436,16 @@ function nav(screenId){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('screen-'+screenId).classList.add('active');
-  document.getElementById('nav-'+screenId).classList.add('active');
+  const navEl = document.getElementById('nav-'+screenId);
+  if(navEl) navEl.classList.add('active');
   state.screen=screenId;
   updateStreakBadge();
   if(screenId==='home')    renderHome();
-  if(screenId==='learn')   renderLearn();
+  if(screenId==='learn'){
+    // Always reset to topic picker when navigating to learn
+    state.selectedTopicId = null;
+    renderLearn();
+  }
   if(screenId==='chat')    renderChat();
   if(screenId==='profil')  renderProfil();
   if(screenId==='admin')   renderAdmin();
@@ -1482,14 +1803,150 @@ function renderHome() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// LEARN MODE TOGGLE
+// LEARN MODE TOGGLE + TOPIC PICKER
 // ═══════════════════════════════════════════════════════════════
+
+// Track selected topic: null = all topics, string = topic id
+if(!state.selectedTopicId) state.selectedTopicId = null;
+
 function setLearnMode(mode){
-  state.learnMode=mode;
+  state.learnMode = mode;
   document.getElementById('mode-sentences').classList.toggle('active', mode==='sentences');
   document.getElementById('mode-numbers').classList.toggle('active', mode==='numbers');
-  if(mode==='sentences') renderSentences();
-  else renderNumbers();
+  if(mode==='sentences'){
+    // Always return to topic picker when switching to sentences
+    showTopicPicker();
+  } else {
+    hideTopicPicker();
+    renderNumbers();
+  }
+}
+
+function showTopicPicker(){
+  document.getElementById('topic-picker').style.display = 'block';
+  document.getElementById('learn-content').style.display = 'none';
+  renderTopicPicker();
+}
+
+function hideTopicPicker(){
+  document.getElementById('topic-picker').style.display = 'none';
+  document.getElementById('learn-content').style.display = 'flex';
+}
+
+function selectTopic(topicId){
+  state.selectedTopicId = topicId;
+  state.learnQIdx = 0;
+  state.learnReps = 0;
+  state.learnPhase = 'listen';
+  state.learnShowBg = false;
+  state.learnTranscript = '';
+  hideTopicPicker();
+  renderSentences();
+}
+
+function backToTopics(){
+  state.selectedTopicId = null;
+  showTopicPicker();
+}
+
+function getTopicSentences(topicId){
+  if(!topicId) return getAllSentences();
+  const topic = state.topics.find(t => t.id === topicId);
+  if(!topic) return [];
+  return topic.sentences.map(s => ({...s, unit: topic.name}));
+}
+
+function getTopicPerfectCount(topicId){
+  const sentences = getTopicSentences(topicId);
+  return sentences.filter(s => state.deck[s.id]?.phase === 'mastered').length;
+}
+
+function getTopicDueCount(topicId){
+  const sentences = getTopicSentences(topicId);
+  return sentences.filter(s => {
+    const c = state.deck[s.id];
+    return c && (c.phase === 'new' || ((c.phase === 'learning' || c.phase === 'review') && isDue(c)));
+  }).length;
+}
+
+function renderTopicPicker(){
+  const el = document.getElementById('topic-picker');
+  const theme = getTheme(activeProfile?.themeId || 'purple');
+  const allPerfect = getPerfectCount();
+  const allTotal = getAllSentences().length;
+  const allDue = getTopicDueCount(null);
+
+  let html = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div style="color:var(--text);font-size:16px;font-weight:900">📖 Thema wählen</div>
+      <div style="color:var(--muted);font-size:11px">${allPerfect}/${LERNPFAD_BASE} Perfekt</div>
+    </div>
+
+    <!-- Alle Themen card -->
+    <button onclick="selectTopic(null)" style="
+      width:100%;background:linear-gradient(135deg,${theme.primary}22,${theme.primary}08);
+      border:2px solid ${theme.primary}55;border-radius:18px;padding:14px 16px;
+      margin-bottom:12px;cursor:pointer;text-align:left;font-family:inherit">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <span style="font-size:26px">🌍</span>
+        <div style="flex:1">
+          <div style="color:${theme.primary};font-size:15px;font-weight:900">Alle Themen</div>
+          <div style="color:var(--muted);font-size:11px">${allTotal} Sätze · ${allDue} heute fällig</div>
+        </div>
+        <span style="color:${theme.primary};font-size:18px">›</span>
+      </div>
+      <div style="background:rgba(255,255,255,0.08);border-radius:5px;height:6px">
+        <div style="width:${Math.min(100,Math.round(allPerfect/LERNPFAD_BASE*100))}%;
+          height:100%;border-radius:5px;
+          background:linear-gradient(90deg,${theme.primary},${theme.primary}88);
+          transition:width 0.6s ease"></div>
+      </div>
+      <div style="color:${theme.primary};font-size:10px;font-weight:700;margin-top:4px">
+        ${Math.min(100,Math.round(allPerfect/LERNPFAD_BASE*100))}% Perfekt
+      </div>
+    </button>
+
+    <!-- 2-column grid of topic cards -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+  `;
+
+  state.topics.forEach(topic => {
+    const total   = topic.sentences.length;
+    const perfect = getTopicPerfectCount(topic.id);
+    const due     = getTopicDueCount(topic.id);
+    const pct     = Math.round(perfect / total * 100);
+    const allDone = perfect === total;
+
+    html += `
+      <button onclick="selectTopic('${topic.id}')" style="
+        background:${allDone ? topic.color+'18' : 'var(--card)'};
+        border:1px solid ${allDone ? topic.color+'66' : 'var(--border)'};
+        border-radius:16px;padding:12px;cursor:pointer;text-align:left;
+        font-family:inherit;display:flex;flex-direction:column;gap:8px;
+        transition:all 0.2s;position:relative;overflow:hidden">
+        ${allDone ? `<div style="position:absolute;top:6px;right:8px;font-size:10px;
+          background:${topic.color}33;color:${topic.color};padding:1px 6px;
+          border-radius:8px;font-weight:800">✓ Fertig</div>` : ''}
+        <div style="font-size:28px">${topic.emoji}</div>
+        <div style="color:var(--text);font-size:12px;font-weight:800;line-height:1.3">
+          ${topic.name}
+        </div>
+        <div style="color:var(--muted);font-size:10px">
+          ${total} Sätze${due > 0 ? ` · <span style="color:var(--rose);font-weight:700">${due} fällig</span>` : ''}
+        </div>
+        <!-- Progress bar -->
+        <div style="background:rgba(255,255,255,0.08);border-radius:4px;height:5px;width:100%">
+          <div style="width:${pct}%;height:100%;border-radius:4px;
+            background:${topic.color};transition:width 0.6s ease"></div>
+        </div>
+        <div style="color:${topic.color};font-size:10px;font-weight:700">
+          ${perfect}/${total} Perfekt
+        </div>
+      </button>`;
+  });
+
+  html += `</div>`;
+  el.innerHTML = html;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1511,8 +1968,19 @@ function buildQueue(){
 }
 
 function renderLearn(){
-  if(state.learnMode==='sentences') renderSentences();
-  else renderNumbers();
+  if(state.learnMode==='sentences'){
+    // Show topic picker unless a topic is already selected
+    if(state.selectedTopicId !== null && state.selectedTopicId !== undefined){
+      // Check if we were mid-session
+      hideTopicPicker();
+      renderSentences();
+    } else {
+      showTopicPicker();
+    }
+  } else {
+    hideTopicPicker();
+    renderNumbers();
+  }
 }
 
 function renderSentences(){
@@ -1522,11 +1990,21 @@ function renderSentences(){
   const card=current?state.deck[current.id]:null;
 
   if(!current||state.learnQueue.length===0){
+    const topicLabel = state.selectedTopicId
+      ? (state.topics.find(t=>t.id===state.selectedTopicId)?.name || 'Thema')
+      : 'Alle Themen';
     el.innerHTML=`<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:32px;text-align:center">
       <div style="font-size:52px">🎉</div>
-      <div style="color:var(--teal);font-size:18px;font-weight:900">Alle Karten erledigt!</div>
-      <div style="color:var(--muted);font-size:13px;line-height:1.6">Dein Gehirn festigt die Erinnerungen jetzt.<br>Komm morgen wieder! 🧠</div>
-      <button onclick="setLearnMode('numbers')" style="background:linear-gradient(135deg,var(--purple),#6366f1);border:none;border-radius:14px;padding:12px 24px;color:white;font-size:13px;font-weight:900">🔢 Zahlen üben →</button>
+      <div style="color:var(--teal);font-size:18px;font-weight:900">${topicLabel} abgeschlossen!</div>
+      <div style="color:var(--muted);font-size:13px;line-height:1.6">Dein Gehirn festigt die Erinnerungen jetzt. 🧠</div>
+      <div style="display:flex;flex-direction:column;gap:9px;width:100%">
+        <button onclick="backToTopics()" style="background:linear-gradient(135deg,var(--primary),var(--primary)aa);border:none;border-radius:14px;padding:12px 24px;color:white;font-size:13px;font-weight:900;font-family:inherit">
+          📚 Anderes Thema wählen
+        </button>
+        <button onclick="setLearnMode('numbers')" style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px;color:var(--muted);font-size:13px;font-weight:800;font-family:inherit">
+          🔢 Zahlen üben
+        </button>
+      </div>
     </div>`;
     return;
   }
@@ -2114,34 +2592,33 @@ function triggerAudioUpload(id){
 function handleAudioUpload(){
   const file=document.getElementById('audio-file-input').files[0];
   if(!file||!state.uploadTargetId) return;
+  // Store filename — in production this would upload to server
   state.audioMap[state.uploadTargetId]=file.name;
   LS.save('audioMap', state.audioMap);
   state.uploadTargetId=null;
   document.getElementById('audio-file-input').value='';
-  showToast('✅ Audio hochgeladen!');
+  showToast('✅ Audio hochgeladen: ' + file.name);
   renderAdminSentences();
 }
 
 function openEdit(sentence){
-  requirePin(()=>{
-    state.editTarget=sentence; state.addToTopicId=null;
-    document.getElementById('edit-title').textContent='✏️ Satz bearbeiten';
-    document.getElementById('edit-de').value=sentence.de||'';
-    document.getElementById('edit-en').value=sentence.en||'';
-    document.getElementById('edit-bg').value=sentence.bg||'';
-    document.getElementById('edit-sheet').classList.add('open');
-  });
+  // Open sheet immediately — PIN checked on save
+  state.editTarget=sentence; state.addToTopicId=null;
+  document.getElementById('edit-title').textContent='✏️ Satz bearbeiten';
+  document.getElementById('edit-de').value=sentence.de||'';
+  document.getElementById('edit-en').value=sentence.en||'';
+  document.getElementById('edit-bg').value=sentence.bg||'';
+  document.getElementById('edit-sheet').classList.add('open');
 }
 
 function openAddSentence(topicId){
-  requirePin(()=>{
-    state.editTarget=null; state.addToTopicId=topicId;
-    document.getElementById('edit-title').textContent='✨ Neuen Satz hinzufügen';
-    document.getElementById('edit-de').value='';
-    document.getElementById('edit-en').value='';
-    document.getElementById('edit-bg').value='';
-    document.getElementById('edit-sheet').classList.add('open');
-  });
+  // Open sheet immediately — PIN checked on save
+  state.editTarget=null; state.addToTopicId=topicId;
+  document.getElementById('edit-title').textContent='✨ Neuen Satz hinzufügen';
+  document.getElementById('edit-de').value='';
+  document.getElementById('edit-en').value='';
+  document.getElementById('edit-bg').value='';
+  document.getElementById('edit-sheet').classList.add('open');
 }
 
 function previewTTS(){
@@ -2154,18 +2631,23 @@ function saveEdit(){
   const en=document.getElementById('edit-en').value.trim();
   const bg=document.getElementById('edit-bg').value.trim();
   if(!de||!bg){ showToast('⚠️ Deutsch und Bulgarisch sind Pflichtfelder'); return; }
-  if(state.addToTopicId){
-    const ns={id:newId(),de,en,bg,origin:'teacher'};
-    state.topics=state.topics.map(t=>t.id===state.addToTopicId?{...t,sentences:[...t.sentences,ns]}:t);
-    state.deck[ns.id]=createCard(ns.id);
-    showToast('✅ Satz hinzugefügt!');
-  } else if(state.editTarget){
-    state.topics=state.topics.map(t=>({...t,sentences:t.sentences.map(s=>s.id===state.editTarget.id?{...s,de,en,bg}:s)}));
-    showToast('✅ Satz gespeichert!');
-  }
-  saveAll();
-  closeEditSheet();
-  renderAdminSentences();
+  // Require PIN before committing the save
+  requirePin(()=>{
+    if(state.addToTopicId){
+      const ns={id:newId(),de,en,bg,origin:'teacher'};
+      state.topics=state.topics.map(t=>t.id===state.addToTopicId?{...t,sentences:[...t.sentences,ns]}:t);
+      state.deck[ns.id]=createCard(ns.id);
+      LS.save('topics',state.topics);
+      LS.save('deck',state.deck);
+      showToast('✅ Satz hinzugefügt!');
+    } else if(state.editTarget){
+      state.topics=state.topics.map(t=>({...t,sentences:t.sentences.map(s=>s.id===state.editTarget.id?{...s,de,en,bg}:s)}));
+      LS.save('topics',state.topics);
+      showToast('✅ Satz gespeichert!');
+    }
+    closeEditSheet();
+    renderAdminSentences();
+  });
 }
 
 function closeEditSheet(){
@@ -2177,7 +2659,11 @@ function deleteSentence(id, topicId){
   requirePin(()=>{
     state.topics=state.topics.map(t=>t.id===topicId?{...t,sentences:t.sentences.filter(s=>s.id!==id)}:t);
     delete state.deck[id]; delete state.audioMap[id];
-    saveAll(); showToast('🗑️ Satz gelöscht'); renderAdminSentences();
+    LS.save('topics',state.topics);
+    LS.save('deck',state.deck);
+    LS.save('audioMap',state.audioMap);
+    showToast('🗑️ Satz gelöscht');
+    renderAdminSentences();
   });
 }
 
@@ -2521,9 +3007,6 @@ function renderProfil() {
           </button>`).join('')}
       </div>
 
-      <!-- Edit panels (shown inline) -->
-      <div id="profil-edit-panel" style="display:none"></div>
-
       <!-- Lernpfad + Geschenke -->
       <div class="card">
         <div class="label" style="margin-bottom:12px">Lernpfad & Erfolgs-Geschenke</div>
@@ -2617,142 +3100,135 @@ function renderProfil() {
   `;
 }
 
-// ── Inline edit panels for profile fields
+// ── Bottom-sheet profile editor
 function profilEdit(field) {
   const p = activeProfile;
   const theme = getTheme(p.themeId);
-  const panel = document.getElementById('profil-edit-panel');
-  if (!panel) return;
-
-  if (editingProfileField === field) {
-    panel.style.display = 'none';
-    editingProfileField = null;
-    return;
-  }
-  editingProfileField = field;
-  panel.style.display = 'block';
+  const content = document.getElementById('profil-edit-sheet-content');
+  if (!content) return;
 
   if (field === 'name') {
-    panel.innerHTML = `
-      <div class="card" style="animation:slideUp 0.2s ease">
-        <div class="label" style="margin-bottom:8px">Name ändern</div>
-        <input id="profil-name-inp" type="text" value="${p.name}" maxlength="20"
-          style="width:100%;background:var(--cardd);border:2px solid ${theme.primary};
-            border-radius:12px;padding:12px;color:var(--text);font-size:16px;font-weight:700;text-align:center"/>
-        <div style="display:flex;gap:8px;margin-top:10px">
-          <button onclick="profilCancelEdit()" class="btn-secondary" style="flex:1;padding:10px">Abbrechen</button>
-          <button onclick="profilSave('name', document.getElementById('profil-name-inp').value)"
-            style="flex:2;background:linear-gradient(135deg,${theme.primary},${theme.primary}aa);
-              border:none;border-radius:12px;padding:10px;color:white;font-size:13px;font-weight:900;cursor:pointer">
-            Speichern ✓
-          </button>
-        </div>
+    content.innerHTML = `
+      <div style="color:var(--text);font-size:16px;font-weight:900;margin-bottom:14px">✏️ Name ändern</div>
+      <input id="ps-name" type="text" value="${p.name}" maxlength="20"
+        style="width:100%;background:var(--cardd);border:2px solid ${theme.primary};
+          border-radius:14px;padding:14px;color:var(--text);font-size:18px;
+          font-weight:700;text-align:center;font-family:inherit"/>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button onclick="closeProfilSheet()" class="btn-secondary" style="flex:1;padding:12px">Abbrechen</button>
+        <button onclick="profilSave('name', document.getElementById('ps-name').value)"
+          style="flex:2;background:linear-gradient(135deg,${theme.primary},${theme.primary}aa);
+            border:none;border-radius:12px;padding:12px;color:white;
+            font-size:14px;font-weight:900;cursor:pointer;font-family:inherit">
+          Speichern ✓
+        </button>
       </div>`;
-    setTimeout(() => document.getElementById('profil-name-inp')?.focus(), 100);
+    openProfilSheet();
+    setTimeout(() => document.getElementById('ps-name')?.focus(), 300);
   }
 
-  if (field === 'goal') {
-    panel.innerHTML = `
-      <div class="card" style="animation:slideUp 0.2s ease">
-        <div class="label" style="margin-bottom:8px">Tagesziel ändern</div>
-        <div style="display:flex;flex-direction:column;gap:8px">
-          ${GOALS.map(g => `
-            <button onclick="profilSave('goal', ${g.mins})" style="
-              background:${p.dailyGoal===g.mins ? theme.primary+'22' : 'var(--cardd)'};
-              border:2px solid ${p.dailyGoal===g.mins ? theme.primary : 'var(--border)'};
-              border-radius:12px;padding:11px 14px;color:var(--text);font-size:13px;
-              font-weight:800;cursor:pointer;display:flex;align-items:center;gap:10px;
-              font-family:inherit">
-              <span style="font-size:20px">${g.emoji}</span>
-              <div style="text-align:left">
-                <div>${g.label}</div>
-                <div style="color:var(--muted);font-size:11px">${g.desc}</div>
-              </div>
-              ${p.dailyGoal===g.mins ? `<span style="margin-left:auto;color:${theme.primary}">✓</span>` : ''}
-            </button>`).join('')}
-        </div>
-        <button onclick="profilCancelEdit()" class="btn-secondary" style="width:100%;margin-top:8px;padding:10px">Abbrechen</button>
-      </div>`;
+  else if (field === 'goal') {
+    content.innerHTML = `
+      <div style="color:var(--text);font-size:16px;font-weight:900;margin-bottom:14px">🎯 Tagesziel ändern</div>
+      <div style="display:flex;flex-direction:column;gap:9px">
+        ${GOALS.map(g => `
+          <button onclick="profilSave('goal',${g.mins})" style="
+            background:${p.dailyGoal===g.mins ? theme.primary+'22' : 'var(--cardd)'};
+            border:2px solid ${p.dailyGoal===g.mins ? theme.primary : 'var(--border)'};
+            border-radius:14px;padding:13px 16px;
+            display:flex;align-items:center;gap:12px;cursor:pointer;font-family:inherit">
+            <span style="font-size:24px">${g.emoji}</span>
+            <div style="text-align:left;flex:1">
+              <div style="color:var(--text);font-size:14px;font-weight:800">${g.label}</div>
+              <div style="color:var(--muted);font-size:11px">${g.desc}</div>
+            </div>
+            ${p.dailyGoal===g.mins ? `<span style="color:${theme.primary};font-size:20px">✓</span>` : ''}
+          </button>`).join('')}
+      </div>
+      <button onclick="closeProfilSheet()" class="btn-secondary"
+        style="width:100%;margin-top:12px;padding:12px">Schließen</button>`;
+    openProfilSheet();
   }
 
-  if (field === 'theme') {
-    panel.innerHTML = `
-      <div class="card" style="animation:slideUp 0.2s ease">
-        <div class="label" style="margin-bottom:8px">Farbthema ändern</div>
-        <div style="display:flex;flex-direction:column;gap:8px">
-          ${THEMES.map(t => `
-            <button onclick="profilSave('theme', '${t.id}')" style="
-              background:${p.themeId===t.id ? t.primary+'22' : 'var(--cardd)'};
-              border:2px solid ${p.themeId===t.id ? t.primary : 'var(--border)'};
-              border-radius:12px;padding:11px 14px;cursor:pointer;
-              display:flex;align-items:center;gap:12px;font-family:inherit">
-              <div style="width:32px;height:32px;border-radius:16px;flex-shrink:0;
-                background:linear-gradient(135deg,${t.primary},${t.primary}88)"></div>
-              <span style="color:var(--text);font-size:14px;font-weight:800">${t.name}</span>
-              ${p.themeId===t.id ? `<span style="margin-left:auto;color:${t.primary};font-size:18px">✓</span>` : ''}
-            </button>`).join('')}
-        </div>
-        <button onclick="profilCancelEdit()" class="btn-secondary" style="width:100%;margin-top:8px;padding:10px">Abbrechen</button>
-      </div>`;
+  else if (field === 'theme') {
+    content.innerHTML = `
+      <div style="color:var(--text);font-size:16px;font-weight:900;margin-bottom:14px">🎨 Farbthema ändern</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px">
+        ${THEMES.map(t => `
+          <button onclick="profilSave('theme','${t.id}')" style="
+            background:${p.themeId===t.id ? t.primary+'22' : 'var(--cardd)'};
+            border:2px solid ${p.themeId===t.id ? t.primary : 'var(--border)'};
+            border-radius:14px;padding:13px 10px;
+            display:flex;flex-direction:column;align-items:center;gap:8px;
+            cursor:pointer;font-family:inherit">
+            <div style="width:36px;height:36px;border-radius:18px;
+              background:linear-gradient(135deg,${t.primary},${t.primary}88);
+              ${p.themeId===t.id ? 'box-shadow:0 0 12px '+t.primary+'66' : ''}
+              display:flex;align-items:center;justify-content:center;
+              font-size:16px;color:white">${p.themeId===t.id ? '✓' : ''}</div>
+            <span style="color:${p.themeId===t.id ? t.primary : 'var(--text)'};
+              font-size:12px;font-weight:800">${t.name}</span>
+          </button>`).join('')}
+      </div>
+      <button onclick="closeProfilSheet()" class="btn-secondary"
+        style="width:100%;margin-top:12px;padding:12px">Schließen</button>`;
+    openProfilSheet();
   }
 
-  if (field === 'emoji') {
+  else if (field === 'emoji') {
     profilEditEmoji();
   }
 }
 
 function profilEditEmoji() {
-  const theme = getTheme(activeProfile.themeId);
-  const panel = document.getElementById('profil-edit-panel');
-  if (!panel) return;
-  editingProfileField = 'emoji';
-  panel.style.display = 'block';
-  panel.innerHTML = `
-    <div class="card" style="animation:slideUp 0.2s ease">
-      <div class="label" style="margin-bottom:8px">Avatar Emoji wählen</div>
-      ${['animals','nature','hobby'].map((cat,ci) => {
-        const labels = ['Tiere','Natur & Magie','Spaß & Hobbys'];
-        return `<div style="color:var(--muted);font-size:9px;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin:8px 0 6px">${labels[ci]}</div>
-          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px">
-            ${EMOJI_SETS[cat].map(e=>`
-              <button onclick="profilSave('emoji','${e}')" style="width:44px;height:44px;border-radius:12px;font-size:22px;
-                background:${activeProfile.emoji===e ? theme.primary+'33' : 'var(--cardd)'};
-                border:2px solid ${activeProfile.emoji===e ? theme.primary : 'var(--border)'};cursor:pointer">${e}</button>`
-            ).join('')}
-          </div>`;
-      }).join('')}
-      <button onclick="profilCancelEdit()" class="btn-secondary" style="width:100%;margin-top:10px;padding:10px">Abbrechen</button>
-    </div>`;
+  const p = activeProfile;
+  const theme = getTheme(p.themeId);
+  const content = document.getElementById('profil-edit-sheet-content');
+  if (!content) return;
+  const labels = ['Tiere', 'Natur & Magie', 'Spaß & Hobbys'];
+  content.innerHTML = `
+    <div style="color:var(--text);font-size:16px;font-weight:900;margin-bottom:14px">😊 Avatar Emoji wählen</div>
+    ${['animals','nature','hobby'].map((cat,ci) => `
+      <div style="color:var(--muted);font-size:10px;font-weight:800;letter-spacing:1px;
+        text-transform:uppercase;margin:10px 0 7px">${labels[ci]}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:6px">
+        ${EMOJI_SETS[cat].map(e=>`
+          <button onclick="profilSave('emoji','${e}')" style="
+            width:46px;height:46px;border-radius:12px;font-size:24px;
+            background:${p.emoji===e ? theme.primary+'33' : 'var(--cardd)'};
+            border:2px solid ${p.emoji===e ? theme.primary : 'var(--border)'};
+            cursor:pointer;transition:all 0.15s;font-family:inherit">${e}</button>`
+        ).join('')}
+      </div>`).join('')}
+    <button onclick="closeProfilSheet()" class="btn-secondary"
+      style="width:100%;margin-top:12px;padding:12px">Schließen</button>`;
+  openProfilSheet();
 }
 
-function profilSave(field, value) {
-  if (!value || (field==='name' && value.trim().length < 2)) return;
-  const profiles = LS.load('profiles', []);
-  const updated = profiles.map(p =>
-    p.id === activeProfile.id ? { ...p, [field]: field==='name' ? value.trim() : value } : p
-  );
-  LS.save('profiles', updated);
-  activeProfile = updated.find(p => p.id === activeProfile.id);
-  if (field === 'theme') applyTheme(value);
-  profilCancelEdit();
-  showToast('✅ Gespeichert!');
-  renderProfil();
-  renderHome();
-  // Update nav avatar
-  document.getElementById('nav-profil-icon').textContent = activeProfile.emoji;
+function openProfilSheet() {
+  const sheet = document.getElementById('profil-edit-sheet');
+  const backdrop = document.getElementById('profil-edit-backdrop');
+  if (sheet) { sheet.style.display = 'block'; sheet.style.animation = 'slideUp 0.3s ease'; }
+  if (backdrop) backdrop.style.display = 'block';
+}
+
+function closeProfilSheet() {
+  const sheet = document.getElementById('profil-edit-sheet');
+  const backdrop = document.getElementById('profil-edit-backdrop');
+  if (sheet) sheet.style.display = 'none';
+  if (backdrop) backdrop.style.display = 'none';
 }
 
 function profilCancelEdit() {
-  const panel = document.getElementById('profil-edit-panel');
-  if (panel) { panel.style.display = 'none'; panel.innerHTML = ''; }
-  editingProfileField = null;
+  closeProfilSheet();
 }
 
+
+
 function confirmDeleteCurrentProfile() {
-  const panel = document.getElementById('profil-edit-panel');
-  if (!panel) return;
-  panel.style.display = 'block';
-  panel.innerHTML = `
+  const content = document.getElementById('profil-edit-sheet-content');
+  if (!content) return;
+  content.innerHTML = `
     <div style="background:rgba(255,107,107,0.12);border:1px solid rgba(255,107,107,0.44);
       border-radius:16px;padding:16px;animation:pop 0.3s ease">
       <div style="color:var(--rose);font-size:14px;font-weight:800;margin-bottom:8px">
@@ -2762,12 +3238,13 @@ function confirmDeleteCurrentProfile() {
         Alle Lernfortschritte für "${activeProfile.name}" werden dauerhaft gelöscht.
       </div>
       <div style="display:flex;gap:8px">
-        <button onclick="profilCancelEdit()" class="btn-secondary" style="flex:1;padding:10px">Nein</button>
+        <button onclick="closeProfilSheet()" class="btn-secondary" style="flex:1;padding:10px">Nein</button>
         <button onclick="deleteProfile('${activeProfile.id}')" style="flex:2;background:var(--rose);
           border:none;border-radius:12px;padding:10px;color:white;font-size:13px;
-          font-weight:900;cursor:pointer">Ja, löschen</button>
+          font-weight:900;cursor:pointer;font-family:inherit">Ja, löschen</button>
       </div>
     </div>`;
+  openProfilSheet();
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -2819,8 +3296,8 @@ function renderAdminGifts() {
 }
 
 function saveGiftMessage(step) {
+  const msg = document.getElementById('gift-msg-'+step)?.value?.trim() || '';
   requirePin(() => {
-    const msg = document.getElementById('gift-msg-'+step)?.value?.trim() || '';
     const gifts = getGifts();
     gifts[step].message = msg;
     saveGifts(gifts);
