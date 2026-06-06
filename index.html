@@ -46,6 +46,7 @@
       overflow: hidden;
       -webkit-tap-highlight-color: transparent;
       -webkit-font-smoothing: antialiased;
+      font-size: 17px;
     }
     button { font-family: inherit; cursor: pointer; }
     textarea, input { font-family: inherit; }
@@ -163,7 +164,25 @@
       width: 100%; border: none; border-radius: 18px; padding: 15px;
       color: white; font-size: 15px; font-weight: 900;
       display: flex; align-items: center; justify-content: center; gap: 10px;
+      background: linear-gradient(135deg, var(--primary), var(--primary));
     }
+    .btn-theme {
+      background: linear-gradient(135deg, var(--primary), var(--primary)cc);
+      border: none; border-radius: 14px; padding: 12px 18px;
+      color: white; font-size: 13px; font-weight: 900;
+      cursor: pointer; font-family: inherit;
+    }
+    .btn-theme:disabled { opacity: 0.4; cursor: not-allowed; }
+    .mode-btn.active {
+      background: var(--primary-tint, rgba(168,85,247,0.22)) !important;
+      border-color: var(--primary) !important; color: var(--primary) !important;
+    }
+    #btn-perfekt {
+      background: var(--primary-tint, rgba(168,85,247,0.22)) !important;
+      border-color: var(--primary) !important; color: var(--primary) !important;
+    }
+    .nav-btn.active .nav-label { color: var(--primary) !important; }
+    .nav-btn.active .nav-bar   { background: var(--primary) !important; }
     .btn-secondary {
       background: var(--cardl); border: 1px solid var(--border);
       border-radius: 12px; padding: 10px 16px;
@@ -343,8 +362,8 @@
       flex: 1; background: var(--card); border-radius: 14px;
       padding: 9px 6px; border: 1px solid var(--border); text-align: center;
     }
-    .stat-val  { font-size: 15px; font-weight: 900; }
-    .stat-lbl  { font-size: 9px; font-weight: 800; color: var(--muted);
+    .stat-val  { font-size: 18px; font-weight: 900; }
+    .stat-lbl  { font-size: 10px; font-weight: 800; color: var(--muted);
                  text-transform: uppercase; margin-top: 1px; }
     .cefr-row {
       background: var(--card); border-radius: 11px;
@@ -372,10 +391,7 @@
       display: flex; align-items: center; justify-content: center; gap: 6px;
       transition: all 0.2s;
     }
-    .mode-btn.active {
-      background: rgba(var(--primary-rgb, 168,85,247), 0.22);
-      border-color: var(--primary); color: var(--primary);
-    }
+    /* mode-btn.active handled above */
     .srs-strip {
       background: var(--card); border-radius: 11px;
       padding: 7px 11px; border: 1px solid var(--border);
@@ -642,7 +658,7 @@
           <div style="color:var(--muted);font-size:12px;font-weight:700">Willkommen zurück</div>
           <div style="color:var(--text);font-size:21px;font-weight:900"><span class="profile-greeting">Hallo!</span></div>
         </div>
-        <button onclick="showGoodie()" style="width:44px;height:44px;border-radius:22px;background:linear-gradient(135deg,var(--rose),var(--purple));border:none;font-size:20px" class="anim-glow">🎁</button>
+        
       </div>
 
       <!-- Level card -->
@@ -659,17 +675,7 @@
         style="margin-bottom:12px">
       </button>
 
-      <!-- SRS queue preview -->
-      <div class="card" style="margin-bottom:12px">
-        <div class="label">Lehrplan Heute</div>
-        <div id="srs-preview"><!-- filled by JS --></div>
-        <div style="display:flex;gap:10px;margin-top:8px">
-          <div style="display:flex;align-items:center;gap:3px"><div class="phase-dot" style="background:var(--muted)"></div><span style="color:var(--muted);font-size:9px">Neu</span></div>
-          <div style="display:flex;align-items:center;gap:3px"><div class="phase-dot" style="background:var(--gold)"></div><span style="color:var(--muted);font-size:9px">Lernen</span></div>
-          <div style="display:flex;align-items:center;gap:3px"><div class="phase-dot" style="background:var(--purple)"></div><span style="color:var(--muted);font-size:9px">Übung</span></div>
-          <div style="display:flex;align-items:center;gap:3px"><div class="phase-dot" style="background:var(--teal)"></div><span style="color:var(--muted);font-size:9px">Gemeistert</span></div>
-        </div>
-      </div>
+
 
       <!-- CEFR ladder -->
       
@@ -1691,11 +1697,7 @@ function renderHome() {
           <span style="color:var(--muted);font-size:11px">· ${pct}%</span>
         </div>
       </div>
-      <!-- Streak -->
-      <div style="text-align:center;flex-shrink:0">
-        <div style="color:var(--gold);font-size:22px;font-weight:900">${state.streak?.count || 0} 🔥</div>
-        <div style="color:var(--muted);font-size:9px;font-weight:800">SERIE</div>
-      </div>
+
     </div>
 
     <!-- Lernpfad progress -->
@@ -1738,7 +1740,7 @@ function renderHome() {
   document.getElementById('stat-grid').innerHTML = [
     { label:'Perfekt',   value: perfect,        color: theme.primary },
     { label:'In Übung',  value: Object.values(state.deck).filter(c=>c.phase==='learning'||c.phase==='review').length, color:'var(--purple)' },
-    { label:'Fällig',    value: dueCount,        color: dueCount > 0 ? 'var(--rose)' : 'var(--muted)' },
+    { label:'Ausstehend',    value: dueCount,        color: dueCount > 0 ? 'var(--rose)' : 'var(--muted)' },
     { label:'Gesamt',    value: total,           color:'var(--muted)' },
   ].map(s => `
     <div class="stat-cell">
@@ -1752,7 +1754,7 @@ function renderHome() {
   const ctaColor = dueCount > 0
     ? `linear-gradient(135deg,var(--rose),#ff8e53)`
     : `linear-gradient(135deg,${theme.primary},${theme.primary}aa)`;
-  startBtn.style.background = `linear-gradient(135deg, ${theme.primary}, ${theme.primary}cc)`;
+  startBtn.style.background = 'linear-gradient(135deg, var(--primary), var(--primary-muted, var(--primary)))';
   startBtn.innerHTML = `
     <div style="display:flex;flex-direction:column;align-items:center;gap:6px;width:100%">
       <div style="display:flex;align-items:center;gap:10px;font-size:15px;font-weight:900">
@@ -1769,34 +1771,8 @@ function renderHome() {
     </div>
   `;
 
-  // ── Lehrplan Heute (renamed, no sentence list — just summary)
-  document.getElementById('srs-preview').innerHTML = `
-    <div style="display:flex;gap:10px;flex-wrap:wrap">
-      ${[
-        { dot:'var(--muted)',   label:'Neu',           val: Object.values(state.deck).filter(c=>c.phase==='new').length },
-        { dot:'var(--gold)',    label:'Lernen',        val: Object.values(state.deck).filter(c=>c.phase==='learning').length },
-        { dot:'var(--purple)', label:'Wiederholung',  val: Object.values(state.deck).filter(c=>c.phase==='review').length },
-        { dot:theme.primary,   label:'Perfekt',       val: perfect },
-      ].map(s => `
-        <div style="display:flex;align-items:center;gap:5px;
-          background:rgba(255,255,255,0.05);border-radius:10px;padding:5px 10px">
-          <div style="width:8px;height:8px;border-radius:4px;background:${s.dot}"></div>
-          <span style="color:var(--text);font-size:12px;font-weight:700">${s.val}</span>
-          <span style="color:var(--muted);font-size:11px">${s.label}</span>
-        </div>`
-      ).join('')}
-    </div>
-    <div style="color:var(--muted);font-size:11px;margin-top:10px">
-      Nächste fällige Karte: <span style="color:${theme.primary};font-weight:700">
-        ${dueCount > 0 ? 'Jetzt' : (() => {
-          const next = Object.values(state.deck)
-            .filter(c=>c.phase!=='new'&&c.phase!=='mastered')
-            .sort((a,b)=>a.nextDue-b.nextDue)[0];
-          return next ? formatDue(next.nextDue) : 'Alle gemeistert 🎉';
-        })()}
-      </span>
-    </div>
-  `;
+  // Lehrplan Heute removed per feedback
+  document.getElementById('srs-preview').innerHTML = '';
 
   // ── CEFR ladder hidden — replaced by Lernpfad in avatar section
   document.getElementById('cefr-ladder').innerHTML = '';
@@ -3225,10 +3201,11 @@ function profilEdit(field) {
         <button onclick="closeProfilSheet()" class="btn-secondary" style="flex:1;padding:12px;font-family:inherit">
           Abbrechen
         </button>
-        <button onclick="profilSave('theme', _tmpTheme)"
+        <button id="theme-save-btn" onclick="if(!this.disabled) profilSave('theme', _tmpTheme)"
+          disabled
           style="flex:2;background:linear-gradient(135deg,var(--primary),var(--primary)aa);
             border:none;border-radius:12px;padding:12px;color:white;
-            font-size:14px;font-weight:900;cursor:pointer;font-family:inherit">
+            font-size:14px;font-weight:900;cursor:not-allowed;font-family:inherit;opacity:0.4">
           Speichern ✓
         </button>
       </div>`;
@@ -3244,19 +3221,28 @@ function profilEdit(field) {
 function tmpSelectGoal(mins) {
   _tmpGoal = mins;
   const theme = getTheme(activeProfile.themeId);
+  const changed = mins !== activeProfile.dailyGoal;
   GOALS.forEach(g => {
     const btn = document.getElementById('go-'+g.mins);
     const chk = document.getElementById('go-check-'+g.mins);
     if (btn) {
-      btn.style.background = g.mins===mins ? theme.primary+'22' : 'var(--cardd)';
+      btn.style.background  = g.mins===mins ? theme.primary+'22' : 'var(--cardd)';
       btn.style.borderColor = g.mins===mins ? theme.primary : 'var(--border)';
     }
     if (chk) chk.textContent = g.mins===mins ? '✓' : '';
   });
+  // Enable/disable save button
+  const saveBtn = document.getElementById('goal-save-btn');
+  if (saveBtn) {
+    saveBtn.disabled = !changed;
+    saveBtn.style.opacity = changed ? '1' : '0.4';
+    saveBtn.style.cursor  = changed ? 'pointer' : 'not-allowed';
+  }
 }
 
 function tmpSelectTheme(id) {
   _tmpTheme = id;
+  const changed = id !== activeProfile.themeId;
   THEMES.forEach(t => {
     const btn    = document.getElementById('th-'+t.id);
     const circle = document.getElementById('th-circle-'+t.id);
@@ -3273,8 +3259,15 @@ function tmpSelectTheme(id) {
       label.style.color = t.id===id ? t.primary : 'var(--text)';
     }
   });
-  // Live preview the colour
+  // Live preview
   applyTheme(id);
+  // Enable/disable save button
+  const saveBtn = document.getElementById('theme-save-btn');
+  if (saveBtn) {
+    saveBtn.disabled = !changed;
+    saveBtn.style.opacity = changed ? '1' : '0.4';
+    saveBtn.style.cursor  = changed ? 'pointer' : 'not-allowed';
+  }
 }
 
 function profilEditEmoji() {
