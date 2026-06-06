@@ -3101,6 +3101,39 @@ function renderProfil() {
 }
 
 // ── Bottom-sheet profile editor
+// Temp state for selections before Speichern
+let _tmpGoal  = null;
+let _tmpTheme = null;
+let _tmpEmoji = null;
+
+function profilSave(field, value) {
+  if (!activeProfile) return;
+  // Validate name
+  if (field === 'name' && (!value || value.trim().length < 2)) {
+    showToast('⚠️ Name muss mindestens 2 Zeichen haben');
+    return;
+  }
+  const val = (field === 'name') ? value.trim() : value;
+  // Update in profiles array
+  const profiles = LS.load('profiles', []);
+  const updated = profiles.map(p =>
+    p.id === activeProfile.id ? { ...p, [field]: val } : p
+  );
+  LS.save('profiles', updated);
+  LS.save('activeProfileId', activeProfile.id);
+  activeProfile = { ...activeProfile, [field]: val };
+  // Apply theme immediately if changed
+  if (field === 'theme') applyTheme(val);
+  closeProfilSheet();
+  showToast('✅ ' + fieldLabel(field) + ' gespeichert!');
+  // Navigate to Home and refresh
+  nav('home');
+}
+
+function fieldLabel(field) {
+  return { name:'Name', goal:'Tagesziel', theme:'Farbthema', emoji:'Avatar' }[field] || field;
+}
+
 function profilEdit(field) {
   const p = activeProfile;
   const theme = getTheme(p.themeId);
@@ -3115,7 +3148,9 @@ function profilEdit(field) {
           border-radius:14px;padding:14px;color:var(--text);font-size:18px;
           font-weight:700;text-align:center;font-family:inherit"/>
       <div style="display:flex;gap:8px;margin-top:12px">
-        <button onclick="closeProfilSheet()" class="btn-secondary" style="flex:1;padding:12px">Abbrechen</button>
+        <button onclick="closeProfilSheet()" class="btn-secondary" style="flex:1;padding:12px;font-family:inherit">
+          Abbrechen
+        </button>
         <button onclick="profilSave('name', document.getElementById('ps-name').value)"
           style="flex:2;background:linear-gradient(135deg,${theme.primary},${theme.primary}aa);
             border:none;border-radius:12px;padding:12px;color:white;
@@ -3124,54 +3159,79 @@ function profilEdit(field) {
         </button>
       </div>`;
     openProfilSheet();
-    setTimeout(() => document.getElementById('ps-name')?.focus(), 300);
+    setTimeout(() => { const i=document.getElementById('ps-name'); if(i){i.focus();i.select();} }, 300);
   }
 
   else if (field === 'goal') {
+    _tmpGoal = p.dailyGoal;
     content.innerHTML = `
-      <div style="color:var(--text);font-size:16px;font-weight:900;margin-bottom:14px">🎯 Tagesziel ändern</div>
-      <div style="display:flex;flex-direction:column;gap:9px">
+      <div style="color:var(--text);font-size:16px;font-weight:900;margin-bottom:14px">🎯 Tagesziel wählen</div>
+      <div id="goal-options" style="display:flex;flex-direction:column;gap:9px">
         ${GOALS.map(g => `
-          <button onclick="profilSave('goal',${g.mins})" style="
+          <button id="go-${g.mins}" onclick="tmpSelectGoal(${g.mins})" style="
             background:${p.dailyGoal===g.mins ? theme.primary+'22' : 'var(--cardd)'};
             border:2px solid ${p.dailyGoal===g.mins ? theme.primary : 'var(--border)'};
             border-radius:14px;padding:13px 16px;
-            display:flex;align-items:center;gap:12px;cursor:pointer;font-family:inherit">
+            display:flex;align-items:center;gap:12px;cursor:pointer;font-family:inherit;
+            transition:all 0.15s">
             <span style="font-size:24px">${g.emoji}</span>
             <div style="text-align:left;flex:1">
               <div style="color:var(--text);font-size:14px;font-weight:800">${g.label}</div>
               <div style="color:var(--muted);font-size:11px">${g.desc}</div>
             </div>
-            ${p.dailyGoal===g.mins ? `<span style="color:${theme.primary};font-size:20px">✓</span>` : ''}
+            <span id="go-check-${g.mins}" style="color:${theme.primary};font-size:20px">
+              ${p.dailyGoal===g.mins ? '✓' : ''}
+            </span>
           </button>`).join('')}
       </div>
-      <button onclick="closeProfilSheet()" class="btn-secondary"
-        style="width:100%;margin-top:12px;padding:12px">Schließen</button>`;
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button onclick="closeProfilSheet()" class="btn-secondary" style="flex:1;padding:12px;font-family:inherit">
+          Abbrechen
+        </button>
+        <button onclick="profilSave('goal', _tmpGoal)"
+          style="flex:2;background:linear-gradient(135deg,${theme.primary},${theme.primary}aa);
+            border:none;border-radius:12px;padding:12px;color:white;
+            font-size:14px;font-weight:900;cursor:pointer;font-family:inherit">
+          Speichern ✓
+        </button>
+      </div>`;
     openProfilSheet();
   }
 
   else if (field === 'theme') {
+    _tmpTheme = p.themeId;
     content.innerHTML = `
-      <div style="color:var(--text);font-size:16px;font-weight:900;margin-bottom:14px">🎨 Farbthema ändern</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px">
+      <div style="color:var(--text);font-size:16px;font-weight:900;margin-bottom:14px">🎨 Farbthema wählen</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px" id="theme-options">
         ${THEMES.map(t => `
-          <button onclick="profilSave('theme','${t.id}')" style="
+          <button id="th-${t.id}" onclick="tmpSelectTheme('${t.id}')" style="
             background:${p.themeId===t.id ? t.primary+'22' : 'var(--cardd)'};
             border:2px solid ${p.themeId===t.id ? t.primary : 'var(--border)'};
             border-radius:14px;padding:13px 10px;
             display:flex;flex-direction:column;align-items:center;gap:8px;
-            cursor:pointer;font-family:inherit">
-            <div style="width:36px;height:36px;border-radius:18px;
+            cursor:pointer;font-family:inherit;transition:all 0.15s">
+            <div id="th-circle-${t.id}" style="width:38px;height:38px;border-radius:19px;
               background:linear-gradient(135deg,${t.primary},${t.primary}88);
-              ${p.themeId===t.id ? 'box-shadow:0 0 12px '+t.primary+'66' : ''}
               display:flex;align-items:center;justify-content:center;
-              font-size:16px;color:white">${p.themeId===t.id ? '✓' : ''}</div>
-            <span style="color:${p.themeId===t.id ? t.primary : 'var(--text)'};
+              font-size:18px;color:white;font-weight:900;
+              ${p.themeId===t.id ? 'box-shadow:0 0 14px '+t.primary+'66' : ''}">
+              ${p.themeId===t.id ? '✓' : ''}
+            </div>
+            <span id="th-label-${t.id}" style="color:${p.themeId===t.id ? t.primary : 'var(--text)'};
               font-size:12px;font-weight:800">${t.name}</span>
           </button>`).join('')}
       </div>
-      <button onclick="closeProfilSheet()" class="btn-secondary"
-        style="width:100%;margin-top:12px;padding:12px">Schließen</button>`;
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button onclick="closeProfilSheet()" class="btn-secondary" style="flex:1;padding:12px;font-family:inherit">
+          Abbrechen
+        </button>
+        <button onclick="profilSave('theme', _tmpTheme)"
+          style="flex:2;background:linear-gradient(135deg,var(--primary),var(--primary)aa);
+            border:none;border-radius:12px;padding:12px;color:white;
+            font-size:14px;font-weight:900;cursor:pointer;font-family:inherit">
+          Speichern ✓
+        </button>
+      </div>`;
     openProfilSheet();
   }
 
@@ -3180,48 +3240,117 @@ function profilEdit(field) {
   }
 }
 
+// Temp select helpers — highlight selection before saving
+function tmpSelectGoal(mins) {
+  _tmpGoal = mins;
+  const theme = getTheme(activeProfile.themeId);
+  GOALS.forEach(g => {
+    const btn = document.getElementById('go-'+g.mins);
+    const chk = document.getElementById('go-check-'+g.mins);
+    if (btn) {
+      btn.style.background = g.mins===mins ? theme.primary+'22' : 'var(--cardd)';
+      btn.style.borderColor = g.mins===mins ? theme.primary : 'var(--border)';
+    }
+    if (chk) chk.textContent = g.mins===mins ? '✓' : '';
+  });
+}
+
+function tmpSelectTheme(id) {
+  _tmpTheme = id;
+  THEMES.forEach(t => {
+    const btn    = document.getElementById('th-'+t.id);
+    const circle = document.getElementById('th-circle-'+t.id);
+    const label  = document.getElementById('th-label-'+t.id);
+    if (btn) {
+      btn.style.background    = t.id===id ? t.primary+'22' : 'var(--cardd)';
+      btn.style.borderColor   = t.id===id ? t.primary : 'var(--border)';
+    }
+    if (circle) {
+      circle.textContent      = t.id===id ? '✓' : '';
+      circle.style.boxShadow  = t.id===id ? '0 0 14px '+t.primary+'66' : 'none';
+    }
+    if (label) {
+      label.style.color = t.id===id ? t.primary : 'var(--text)';
+    }
+  });
+  // Live preview the colour
+  applyTheme(id);
+}
+
 function profilEditEmoji() {
   const p = activeProfile;
   const theme = getTheme(p.themeId);
+  _tmpEmoji = p.emoji;
   const content = document.getElementById('profil-edit-sheet-content');
   if (!content) return;
   const labels = ['Tiere', 'Natur & Magie', 'Spaß & Hobbys'];
   content.innerHTML = `
-    <div style="color:var(--text);font-size:16px;font-weight:900;margin-bottom:14px">😊 Avatar Emoji wählen</div>
+    <div style="color:var(--text);font-size:16px;font-weight:900;margin-bottom:6px">😊 Avatar wählen</div>
+    <div id="emoji-selected-preview" style="text-align:center;font-size:40px;margin-bottom:10px">${p.emoji}</div>
     ${['animals','nature','hobby'].map((cat,ci) => `
       <div style="color:var(--muted);font-size:10px;font-weight:800;letter-spacing:1px;
-        text-transform:uppercase;margin:10px 0 7px">${labels[ci]}</div>
-      <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:6px">
+        text-transform:uppercase;margin:8px 0 6px">${labels[ci]}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:4px">
         ${EMOJI_SETS[cat].map(e=>`
-          <button onclick="profilSave('emoji','${e}')" style="
+          <button id="em-btn-${e}" onclick="tmpSelectEmoji('${e}')" style="
             width:46px;height:46px;border-radius:12px;font-size:24px;
             background:${p.emoji===e ? theme.primary+'33' : 'var(--cardd)'};
             border:2px solid ${p.emoji===e ? theme.primary : 'var(--border)'};
             cursor:pointer;transition:all 0.15s;font-family:inherit">${e}</button>`
         ).join('')}
       </div>`).join('')}
-    <button onclick="closeProfilSheet()" class="btn-secondary"
-      style="width:100%;margin-top:12px;padding:12px">Schließen</button>`;
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button onclick="closeProfilSheet()" class="btn-secondary" style="flex:1;padding:12px;font-family:inherit">
+        Abbrechen
+      </button>
+      <button onclick="profilSave('emoji', _tmpEmoji)"
+        style="flex:2;background:linear-gradient(135deg,${theme.primary},${theme.primary}aa);
+          border:none;border-radius:12px;padding:12px;color:white;
+          font-size:14px;font-weight:900;cursor:pointer;font-family:inherit">
+        Speichern ✓
+      </button>
+    </div>`;
   openProfilSheet();
 }
 
+function tmpSelectEmoji(e) {
+  _tmpEmoji = e;
+  const theme = getTheme(activeProfile.themeId);
+  // Update preview
+  const prev = document.getElementById('emoji-selected-preview');
+  if (prev) prev.textContent = e;
+  // Update button highlights
+  document.querySelectorAll('[id^="em-btn-"]').forEach(btn => {
+    const btnEmoji = btn.textContent;
+    btn.style.background  = btnEmoji===e ? theme.primary+'33' : 'var(--cardd)';
+    btn.style.borderColor = btnEmoji===e ? theme.primary : 'var(--border)';
+  });
+}
+
 function openProfilSheet() {
-  const sheet = document.getElementById('profil-edit-sheet');
+  const sheet    = document.getElementById('profil-edit-sheet');
   const backdrop = document.getElementById('profil-edit-backdrop');
-  if (sheet) { sheet.style.display = 'block'; sheet.style.animation = 'slideUp 0.3s ease'; }
+  if (sheet)    { sheet.style.display = 'block'; sheet.style.animation = 'slideUp 0.3s ease'; }
   if (backdrop) backdrop.style.display = 'block';
 }
 
 function closeProfilSheet() {
-  const sheet = document.getElementById('profil-edit-sheet');
+  const sheet    = document.getElementById('profil-edit-sheet');
   const backdrop = document.getElementById('profil-edit-backdrop');
-  if (sheet) sheet.style.display = 'none';
+  if (sheet)    sheet.style.display = 'none';
   if (backdrop) backdrop.style.display = 'none';
+  // Reset temp theme preview if cancelled
+  if (_tmpTheme && activeProfile && _tmpTheme !== activeProfile.themeId) {
+    applyTheme(activeProfile.themeId);
+  }
+  _tmpGoal = null; _tmpTheme = null; _tmpEmoji = null;
 }
 
 function profilCancelEdit() {
   closeProfilSheet();
 }
+
+
 
 
 
