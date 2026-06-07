@@ -523,121 +523,37 @@
 <div id="app">
 
   <!-- ══ ONBOARDING OVERLAY ══ -->
-  <div id="onboarding-overlay">
-    <div class="ob-progress"><div class="ob-fill" id="ob-fill"></div></div>
-    <!-- Step 0: Welcome -->
-    <div class="ob-screen ob-center active" id="ob-step-0">
-      <div style="font-size:72px;animation:float 2s ease-in-out infinite">🦋</div>
-      <div>
-        <div style="color:var(--purple);font-size:13px;font-weight:800;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">Willkommen bei</div>
-        <div style="color:var(--text);font-size:28px;font-weight:900;line-height:1.2">Bulgarisch<br/>Lern-App</div>
-      </div>
-      <div style="color:var(--muted);font-size:14px;line-height:1.7;max-width:280px">
-        Lerne Bulgarisch mit Sätzen, Gesprächen und Zahlen — auf dich persönlich zugeschnitten.
-      </div>
-      <div style="display:flex;gap:8px;margin-top:8px">
-        <div style="width:48px;height:48px;border-radius:24px;background:rgba(168,85,247,0.22);border:1px solid rgba(168,85,247,0.44);display:flex;align-items:center;justify-content:center;font-size:22px">🇧🇬</div>
-        <div style="width:48px;height:48px;border-radius:24px;background:rgba(168,85,247,0.22);border:1px solid rgba(168,85,247,0.44);display:flex;align-items:center;justify-content:center;font-size:22px">📖</div>
-        <div style="width:48px;height:48px;border-radius:24px;background:rgba(168,85,247,0.22);border:1px solid rgba(168,85,247,0.44);display:flex;align-items:center;justify-content:center;font-size:22px">🎤</div>
-        <div style="width:48px;height:48px;border-radius:24px;background:rgba(168,85,247,0.22);border:1px solid rgba(168,85,247,0.44);display:flex;align-items:center;justify-content:center;font-size:22px">🔢</div>
-      </div>
-      <button onclick="obNext()" style="width:100%;background:linear-gradient(135deg,var(--rose),var(--purple));border:none;border-radius:20px;padding:16px;color:white;font-size:16px;font-weight:900;margin-top:8px;box-shadow:0 8px 32px rgba(168,85,247,0.44)">Los geht's! ✨</button>
+  <div id="ob-overlay" style="display:none;position:fixed;inset:0;background:var(--bg);
+    flex-direction:column;max-width:430px;margin:0 auto;z-index:500;font-family:'Nunito',sans-serif">
+    <!-- Progress bar -->
+    <div style="height:4px;background:var(--cardl);flex-shrink:0">
+      <div id="ob-progress" style="height:100%;border-radius:2px;width:0%;transition:width 0.4s ease,background 0.4s ease"></div>
     </div>
-    <!-- Step 1: Name -->
-    <div class="ob-screen" id="ob-step-1">
-      <div style="text-align:center;padding-top:20px">
-        <div style="font-size:48px;margin-bottom:12px">👤</div>
-        <div style="color:var(--text);font-size:22px;font-weight:900">Wie heißt du?</div>
-        <div style="color:var(--muted);font-size:13px;margin-top:6px">Dein Name erscheint überall in der App.</div>
-      </div>
-      <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:16px">
-        <input id="ob-name-input" type="text" maxlength="20" placeholder="Deinen Namen eingeben..."
-          oninput="obNameInput()"
-          style="width:100%;background:var(--cardd);border:2px solid var(--border);border-radius:16px;padding:16px 18px;color:var(--text);font-size:20px;font-weight:700;text-align:center;transition:border-color 0.3s"/>
-        <div id="ob-name-preview" style="text-align:center;display:none;animation:fadeIn 0.3s ease">
-          <span style="color:var(--muted);font-size:14px">Hallo, </span>
-          <span id="ob-name-show" style="color:var(--purple);font-size:18px;font-weight:900"></span>
-          <span style="color:var(--muted);font-size:14px"> 👋</span>
-        </div>
-      </div>
-      <div style="display:flex;gap:10px">
-        <button onclick="obBack()" class="btn-secondary" style="flex:1;padding:14px">← Zurück</button>
-        <button id="ob-name-next" onclick="obNext()" disabled style="flex:2;background:var(--cardl);border:none;border-radius:16px;padding:14px;color:var(--muted);font-size:14px;font-weight:900">Weiter →</button>
-      </div>
-    </div>
-    <!-- Step 2: Emoji -->
-    <div class="ob-screen" id="ob-step-2">
-      <div style="text-align:center">
-        <div id="ob-emoji-preview" style="font-size:48px;margin-bottom:12px">❓</div>
-        <div style="color:var(--text);font-size:22px;font-weight:900">Wähle dein Emoji</div>
-        <div style="color:var(--muted);font-size:13px;margin-top:6px">Dein persönliches Symbol!</div>
-      </div>
-      <div style="flex:1;overflow-y:auto">
-        <div style="color:var(--muted);font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Tiere</div>
-        <div class="emoji-grid" style="margin-bottom:14px" id="emoji-animals"></div>
-        <div style="color:var(--muted);font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Natur &amp; Magie</div>
-        <div class="emoji-grid" style="margin-bottom:14px" id="emoji-nature"></div>
-        <div style="color:var(--muted);font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">Spaß &amp; Hobbys</div>
-        <div class="emoji-grid" id="emoji-hobby"></div>
-      </div>
-      <div style="display:flex;gap:10px;flex-shrink:0">
-        <button onclick="obBack()" class="btn-secondary" style="flex:1;padding:14px">← Zurück</button>
-        <button id="ob-emoji-next" onclick="obNext()" disabled style="flex:2;background:var(--cardl);border:none;border-radius:16px;padding:14px;color:var(--muted);font-size:14px;font-weight:900">Weiter →</button>
-      </div>
-    </div>
-    <!-- Step 3: Colour -->
-    <div class="ob-screen" id="ob-step-3">
-      <div style="text-align:center">
-        <div id="ob-theme-preview-icon" style="font-size:48px;margin-bottom:12px">🎨</div>
-        <div style="color:var(--text);font-size:22px;font-weight:900">Wähle deine Farbe</div>
-        <div style="color:var(--muted);font-size:13px;margin-top:6px">Deine persönliche App-Farbe!</div>
-      </div>
-      <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:10px" id="theme-btns"></div>
-      <div style="display:flex;gap:10px;flex-shrink:0">
-        <button onclick="obBack()" class="btn-secondary" style="flex:1;padding:14px">← Zurück</button>
-        <button id="ob-theme-next" onclick="obNext()" style="flex:2;border:none;border-radius:16px;padding:14px;color:white;font-size:14px;font-weight:900">Weiter →</button>
-      </div>
-    </div>
-    <!-- Step 4: Goal -->
-    <div class="ob-screen" id="ob-step-4">
-      <div style="text-align:center">
-        <div id="ob-goal-icon" style="font-size:48px;margin-bottom:12px">🎯</div>
-        <div style="color:var(--text);font-size:22px;font-weight:900">Dein Tagesziel</div>
-        <div style="color:var(--muted);font-size:13px;margin-top:6px">Wie viel möchtest du täglich lernen?</div>
-      </div>
-      <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:10px" id="goal-btns"></div>
-      <div style="display:flex;gap:10px;flex-shrink:0">
-        <button onclick="obBack()" class="btn-secondary" style="flex:1;padding:14px">← Zurück</button>
-        <button id="ob-goal-next" onclick="obNext()" style="flex:2;border:none;border-radius:16px;padding:14px;color:white;font-size:14px;font-weight:900">Weiter →</button>
-      </div>
-    </div>
-    <!-- Step 5: Confirm -->
-    <div class="ob-screen" id="ob-step-5">
-      <div style="text-align:center;margin-bottom:8px">
-        <div style="color:var(--muted);font-size:12px;font-weight:700;margin-bottom:8px">ALLES BEREIT?</div>
-        <div style="color:var(--text);font-size:22px;font-weight:900">Dein Profil</div>
-      </div>
-      <div id="ob-confirm-card" class="profile-card-big" style="animation:pop 0.4s ease"></div>
-      <div style="color:var(--muted);font-size:12px;text-align:center;line-height:1.6">
-        Du kannst später weitere Profile hinzufügen — bis zu 4 Personen!
-      </div>
-      <div style="display:flex;gap:10px;margin-top:auto">
-        <button onclick="obBack()" class="btn-secondary" style="flex:1;padding:14px">← Zurück</button>
-        <button id="ob-confirm-btn" onclick="obConfirm()" style="flex:2;border:none;border-radius:16px;padding:14px;color:white;font-size:16px;font-weight:900"></button>
-      </div>
-    </div>
+    <!-- Single content area — rendered by JS per step -->
+    <div id="ob-content" style="flex:1;overflow-y:auto;padding:28px 22px 32px;display:flex;flex-direction:column;gap:18px"></div>
   </div>
 
   <!-- ══ PROFILE SELECTOR OVERLAY ══ -->
-  <div id="profile-overlay">
-    <div style="padding:48px 24px 32px;flex:1;overflow-y:auto;display:flex;flex-direction:column">
-      <div style="text-align:center;margin-bottom:28px">
-        <div style="font-size:40px;margin-bottom:10px;animation:float 2s ease-in-out infinite">🦋</div>
-        <div style="color:var(--text);font-size:22px;font-weight:900">Wer lernt heute?</div>
-        <div style="color:var(--muted);font-size:13px;margin-top:6px">Wähle dein Profil</div>
-      </div>
-      <div id="profile-list"></div>
+  <div id="ps-overlay" style="display:none;position:fixed;inset:0;background:var(--bg);
+    flex-direction:column;max-width:430px;margin:0 auto;z-index:500;
+    font-family:'Nunito',sans-serif;padding:48px 20px 32px;overflow-y:auto">
+    <div style="text-align:center;margin-bottom:24px">
+      <div id="ps-avatar-header" style="font-size:40px;margin-bottom:8px">🦋</div>
+      <div style="color:var(--text);font-size:22px;font-weight:900">Wer lernt heute?</div>
+      <div style="color:var(--muted);font-size:13px;margin-top:4px">Profil wählen</div>
     </div>
+    <div id="ps-list"></div>
+  </div>
+
+  <!-- ══ PROFILE EDIT SHEET ══ -->
+  <div id="pe-backdrop" onclick="closeProfileEdit()"
+    style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:300"></div>
+  <div id="pe-sheet" style="display:none;position:fixed;bottom:0;left:50%;
+    transform:translateX(-50%);width:100%;max-width:430px;
+    background:var(--card);border-radius:22px 22px 0 0;
+    padding:0 18px 36px;z-index:310;max-height:88vh;overflow-y:auto">
+    <div style="width:40px;height:4px;background:var(--border);border-radius:2px;margin:12px auto 16px"></div>
+    <div id="pe-content"></div>
   </div>
 
 
@@ -837,19 +753,7 @@
   </div>
 </div>
 
-<!-- ── Profile Edit Sheet ── -->
-<div id="profil-edit-sheet" style="position:fixed;bottom:0;left:50%;
-  transform:translateX(-50%);width:100%;max-width:430px;
-  background:var(--card);border-radius:22px 22px 0 0;
-  padding:0 18px 32px;border:1px solid var(--border);
-  display:none;z-index:250;max-height:85vh;overflow-y:auto">
-  <div style="width:36px;height:4px;background:var(--border);border-radius:2px;
-    margin:12px auto 14px"></div>
-  <div id="profil-edit-sheet-content"></div>
-</div>
-<div id="profil-edit-backdrop" onclick="closeProfilSheet()"
-  style="position:fixed;inset:0;background:rgba(0,0,0,0.6);
-  display:none;z-index:240"></div>
+
 
 <!-- ── Toast ── -->
 <div id="toast"></div>
@@ -2871,13 +2775,8 @@ const GIFT_LEVELS = [
 ];
 
 function getGifts() {
-  return LS.load('gifts', {
-    1: { message:"", unlocked:false },
-    2: { message:"", unlocked:false },
-    3: { message:"", unlocked:false },
-    4: { message:"", unlocked:false },
-    5: { message:"", unlocked:false },
-  });
+  return LS.load('gifts', { 1:{message:"",unlocked:false}, 2:{message:"",unlocked:false},
+    3:{message:"",unlocked:false}, 4:{message:"",unlocked:false}, 5:{message:"",unlocked:false} });
 }
 function saveGifts(g) { LS.save('gifts', g); }
 
@@ -2889,101 +2788,622 @@ function checkGiftUnlocks() {
     if (pct >= gl.pct && !gifts[gl.step].unlocked) {
       gifts[gl.step].unlocked = true;
       changed = true;
-      showGiftUnlockCelebration(gl);
+      setTimeout(() => showGiftCelebration(gl), 600);
     }
   });
   if (changed) saveGifts(gifts);
 }
 
-function showGiftUnlockCelebration(gl) {
-  // Override goodie modal for gift unlock
-  const g = {
-    icon: gl.emoji,
-    title: "Stufe freigeschaltet! 🎉",
-    content: `Du hast ${gl.label} erreicht!\n\nFrag Papa nach deinem Erfolgs-Geschenk! 🎁`,
-    color: getTheme(activeProfile?.themeId || 'purple').primary,
-  };
-  setTimeout(() => {
-    document.getElementById('gm-dots').innerHTML = ['#FF6B6B','#FFD166','#06D6A0','#A855F7','#38BDF8'].map((c,i)=>
-      `<div class="gm-dot anim-float" style="background:${c};animation-delay:${i*0.18}s"></div>`
+function showGiftCelebration(gl) {
+  const c = getTheme(activeProfile?.themeId || 'purple').primary;
+  document.getElementById('gm-dots').innerHTML =
+    ['#FF6B6B','#FFD166','#06D6A0','#A855F7','#38BDF8'].map((col,i) =>
+      `<div class="gm-dot anim-float" style="background:${col};animation-delay:${i*0.18}s"></div>`
     ).join('');
-    document.getElementById('gm-icon').textContent = gl.emoji;
-    document.getElementById('gm-title').style.color = g.color;
-    document.getElementById('gm-title').textContent = g.title;
-    document.getElementById('gm-content').textContent = g.content;
-    document.getElementById('gm-btn').style.background = g.color;
-    document.querySelector('#goodie-modal .gm-card').style.border = `2px solid ${g.color}44`;
-    document.querySelector('#goodie-modal .gm-card').style.boxShadow = `0 0 60px ${g.color}44`;
-    document.getElementById('goodie-modal').classList.add('open');
-  }, 600);
+  document.getElementById('gm-icon').textContent = gl.emoji;
+  document.getElementById('gm-title').style.color = c;
+  document.getElementById('gm-title').textContent = `Stufe ${gl.step} freigeschaltet! 🎉`;
+  document.getElementById('gm-content').textContent = `Du hast ${gl.label} erreicht!\n\nFrag Papa nach deinem Erfolgs-Geschenk! 🎁`;
+  document.getElementById('gm-btn').style.background = c;
+  const card = document.querySelector('#goodie-modal .gm-card');
+  if(card){ card.style.border=`2px solid ${c}44`; card.style.boxShadow=`0 0 60px ${c}44`; }
+  document.getElementById('goodie-modal').classList.add('open');
 }
 
 // ═══════════════════════════════════════════════════════════════
-// MEIN PROFIL SCREEN
+// THEME APPLICATION
 // ═══════════════════════════════════════════════════════════════
 
-let editingProfileField = null; // 'name'|'goal'|'theme'|'emoji'|null
+function applyTheme(themeId) {
+  const t = getTheme(themeId);
+  const r = document.documentElement.style;
+  r.setProperty('--primary',       t.primary);
+  r.setProperty('--primary-tint',  t.primary + '33');
+  r.setProperty('--primary-muted', t.primary + 'cc');
+  r.setProperty('--primary-glow',  t.primary + '44');
+  r.setProperty('--theme-glow',    t.primary + '22');
+  r.setProperty('--theme-border',  t.primary + '44');
+  // Update nav active indicators
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    const active = btn.classList.contains('active');
+    const lbl = btn.querySelector('.nav-label');
+    const bar = btn.querySelector('.nav-bar');
+    if (lbl) lbl.style.color      = active ? t.primary : '';
+    if (bar) bar.style.background = active ? t.primary : '';
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PROFILE DATA HELPERS
+// ═══════════════════════════════════════════════════════════════
+
+const MAX_PROFILES = 4;
+let activeProfile  = null;
+
+function loadProfiles()    { return LS.load('profiles', []); }
+function saveProfiles(arr) { LS.save('profiles', arr); }
+
+function createProfile(data) {
+  return {
+    id:        Date.now().toString(),
+    name:      data.name.trim(),
+    emoji:     data.emoji,
+    themeId:   data.themeId,
+    dailyGoal: data.dailyGoal,
+    streak:    0,
+    lastDate:  null,
+    createdAt: Date.now(),
+  };
+}
+
+function persistProfile(updated) {
+  // Save an updated profile object, keep rest unchanged
+  const profiles = loadProfiles().map(p =>
+    p.id === updated.id ? { ...p, ...updated } : p
+  );
+  saveProfiles(profiles);
+  activeProfile = { ...activeProfile, ...updated };
+  LS.save('activeProfileId', activeProfile.id);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ON PROFILE LOADED — single entry point after any profile change
+// ═══════════════════════════════════════════════════════════════
+
+function onProfileLoaded(profile) {
+  activeProfile = profile;
+  applyTheme(profile.themeId);
+  // Update nav profile icon
+  const navIcon = document.getElementById('nav-profil-icon');
+  if (navIcon) navIcon.textContent = profile.emoji;
+  // Sync SRS deck and streak
+  syncDeck();
+  updateStreak();
+  updateStreakBadge();
+  checkGiftUnlocks();
+  // Navigate to home
+  nav('home');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// BOOT — called once on app start
+// ═══════════════════════════════════════════════════════════════
+
+function bootProfiles() {
+  const profiles = loadProfiles();
+  if (profiles.length === 0) {
+    showOnboarding(null); // fresh start
+    return;
+  }
+  const activeId = LS.load('activeProfileId', null);
+  const p = profiles.find(x => x.id === activeId) || profiles[0];
+  LS.save('activeProfileId', p.id);
+  onProfileLoaded(p);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ONBOARDING — 6-step wizard
+// Steps: 0=Welcome 1=Name 2=Emoji 3=Colour 4=Goal 5=Confirm
+// ═══════════════════════════════════════════════════════════════
+
+let ob = {
+  step: 0,
+  name: '',
+  emoji: '',
+  themeId: 'purple',
+  dailyGoal: 10,
+};
+
+const OB_STEPS = 6; // 0..5
+
+function showOnboarding(editProfile) {
+  // editProfile = null means fresh profile, or a profile object to edit
+  ob = {
+    step:      0,
+    name:      editProfile ? editProfile.name      : '',
+    emoji:     editProfile ? editProfile.emoji     : '',
+    themeId:   editProfile ? editProfile.themeId   : 'purple',
+    dailyGoal: editProfile ? editProfile.dailyGoal : 10,
+    editId:    editProfile ? editProfile.id        : null,
+  };
+  document.getElementById('ob-overlay').style.display = 'flex';
+  obRenderStep();
+}
+
+function hideOnboarding() {
+  document.getElementById('ob-overlay').style.display = 'none';
+}
+
+function obRenderStep() {
+  const el = document.getElementById('ob-content');
+  const prog = document.getElementById('ob-progress');
+  const t = getTheme(ob.themeId);
+  const pct = ob.step === 0 ? 0 : Math.round((ob.step / (OB_STEPS - 1)) * 100);
+  if (prog) {
+    prog.style.width      = pct + '%';
+    prog.style.background = `linear-gradient(90deg,${t.primary},${t.primary}88)`;
+  }
+
+  const isEdit = !!ob.editId;
+
+  // Back button (hidden on step 0)
+  const backBtn = ob.step > 0
+    ? `<button onclick="obBack()" style="background:none;border:none;color:var(--muted);
+        font-size:22px;cursor:pointer;padding:0;align-self:flex-start;font-family:inherit">← Zurück</button>`
+    : '';
+
+  // Next / confirm button
+  const nextDisabled =
+    (ob.step === 1 && ob.name.trim().length < 2) ||
+    (ob.step === 2 && !ob.emoji);
+  const nextLabel = ob.step === OB_STEPS - 1
+    ? (ob.emoji || '🦋') + ' ' + (isEdit ? 'Änderungen speichern' : `Los geht's, ${ob.name}!`)
+    : 'Weiter →';
+  const nextFn    = ob.step === OB_STEPS - 1 ? 'obConfirm()' : 'obNext()';
+  const nextBtn = `<button onclick="${nextFn}"
+    ${nextDisabled ? 'disabled' : ''}
+    style="width:100%;background:${nextDisabled ? 'var(--cardl)' : `linear-gradient(135deg,${t.primary},${t.primary}cc)`};
+      border:none;border-radius:16px;padding:15px;color:${nextDisabled ? 'var(--muted)' : 'white'};
+      font-size:15px;font-weight:900;cursor:${nextDisabled ? 'not-allowed' : 'pointer'};
+      font-family:inherit;transition:all 0.2s" id="ob-next-btn">
+    ${nextLabel}
+  </button>`;
+
+  let body = '';
+
+  // ── STEP 0: Welcome
+  if (ob.step === 0) {
+    body = `
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;
+        justify-content:center;text-align:center;gap:20px">
+        <div style="font-size:72px;animation:float 2s ease-in-out infinite">🦋</div>
+        <div>
+          <div style="color:${t.primary};font-size:13px;font-weight:800;
+            letter-spacing:2px;text-transform:uppercase;margin-bottom:8px">
+            ${isEdit ? 'Profil bearbeiten' : 'Willkommen bei'}
+          </div>
+          <div style="color:var(--text);font-size:26px;font-weight:900;line-height:1.2">
+            ${isEdit ? ob.name : 'Bulgarisch<br/>Lern-App'}
+          </div>
+        </div>
+        ${isEdit ? '' : `<div style="color:var(--muted);font-size:14px;line-height:1.7;max-width:280px">
+          Lerne Bulgarisch mit Sätzen, Gesprächen und Zahlen —
+          auf dich persönlich zugeschnitten.
+        </div>`}
+      </div>
+      ${nextBtn}`;
+  }
+
+  // ── STEP 1: Name
+  else if (ob.step === 1) {
+    body = `
+      <div style="text-align:center">
+        <div style="font-size:44px;margin-bottom:10px">👤</div>
+        <div style="color:var(--text);font-size:22px;font-weight:900">Wie heißt du?</div>
+        <div style="color:var(--muted);font-size:13px;margin-top:6px">
+          Dein Name erscheint überall in der App.
+        </div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:14px">
+        <input id="ob-name-inp" type="text" maxlength="20"
+          value="${ob.name}"
+          placeholder="Deinen Namen eingeben..."
+          oninput="ob.name=this.value.trim();obRefreshNext()"
+          style="width:100%;background:var(--cardd);
+            border:2px solid ${ob.name.length>=2 ? t.primary : 'var(--border)'};
+            border-radius:16px;padding:16px;color:var(--text);font-size:18px;
+            font-weight:700;text-align:center;font-family:inherit;transition:border-color 0.2s"/>
+        <div id="ob-name-preview" style="text-align:center;${ob.name.length<2?'opacity:0':'opacity:1'};transition:opacity 0.3s">
+          <span style="color:var(--muted);font-size:14px">Hallo, </span>
+          <span style="color:${t.primary};font-size:18px;font-weight:900">${ob.name || '...'}</span>
+          <span style="color:var(--muted);font-size:14px"> 👋</span>
+        </div>
+      </div>
+      ${backBtn}
+      ${nextBtn}`;
+  }
+
+  // ── STEP 2: Emoji
+  else if (ob.step === 2) {
+    const cats = [
+      { id:'animals', label:'Tiere',         set:['🦋','🐬','🦄','🐱','🦊','🐼','🐨','🦁','🐸','🐙'] },
+      { id:'nature',  label:'Natur & Magie', set:['🌸','🌺','🌻','⭐','🌙','🌈','🔮','💎','🍀','🌿'] },
+      { id:'hobby',   label:'Spaß & Hobbys', set:['🎵','🎨','📚','✏️','🎭','🎪','🎠','🎡','🏆','🎯'] },
+    ];
+    body = `
+      <div style="text-align:center">
+        <div style="font-size:48px;margin-bottom:8px">${ob.emoji || '❓'}</div>
+        <div style="color:var(--text);font-size:22px;font-weight:900">Wähle dein Emoji</div>
+        <div style="color:var(--muted);font-size:13px;margin-top:4px">Dein persönliches Symbol!</div>
+      </div>
+      <div style="flex:1;overflow-y:auto">
+        ${cats.map(cat => `
+          <div style="color:var(--muted);font-size:10px;font-weight:800;letter-spacing:1px;
+            text-transform:uppercase;margin:10px 0 8px">${cat.label}</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:4px">
+            ${cat.set.map(e => `
+              <button onclick="ob.emoji='${e}';obRenderStep()" style="
+                width:50px;height:50px;border-radius:14px;font-size:26px;cursor:pointer;
+                background:${ob.emoji===e ? t.primary+'33' : 'var(--card)'};
+                border:2px solid ${ob.emoji===e ? t.primary : 'var(--border)'};
+                transform:${ob.emoji===e ? 'scale(1.15)' : 'scale(1)'};
+                transition:all 0.15s;font-family:inherit">${e}</button>`
+            ).join('')}
+          </div>`).join('')}
+      </div>
+      ${backBtn}
+      ${nextBtn}`;
+  }
+
+  // ── STEP 3: Colour theme
+  else if (ob.step === 3) {
+    body = `
+      <div style="text-align:center">
+        <div style="font-size:48px;margin-bottom:8px">${ob.emoji || '🎨'}</div>
+        <div style="color:var(--text);font-size:22px;font-weight:900">Deine Lieblingsfarbe</div>
+        <div style="color:var(--muted);font-size:13px;margin-top:4px">Töngt die gesamte App!</div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:9px">
+        ${THEMES.map(th => `
+          <button onclick="ob.themeId='${th.id}';obRenderStep()" style="
+            background:${ob.themeId===th.id ? th.primary+'22' : 'var(--card)'};
+            border:2px solid ${ob.themeId===th.id ? th.primary : 'var(--border)'};
+            border-radius:16px;padding:13px 16px;cursor:pointer;
+            display:flex;align-items:center;gap:14px;font-family:inherit;transition:all 0.15s">
+            <div style="width:38px;height:38px;border-radius:19px;flex-shrink:0;
+              background:linear-gradient(135deg,${th.primary},${th.primary}88);
+              display:flex;align-items:center;justify-content:center;
+              font-size:18px;color:white;font-weight:900;
+              box-shadow:${ob.themeId===th.id ? '0 0 14px '+th.primary+'66' : 'none'}">
+              ${ob.themeId===th.id ? '✓' : ''}
+            </div>
+            <div style="text-align:left">
+              <div style="color:${ob.themeId===th.id ? th.primary : 'var(--text)'};
+                font-size:15px;font-weight:800">${th.name}</div>
+              <div style="color:var(--muted);font-size:11px">Deine App-Akzentfarbe</div>
+            </div>
+          </button>`).join('')}
+      </div>
+      ${backBtn}
+      ${nextBtn}`;
+  }
+
+  // ── STEP 4: Daily goal
+  else if (ob.step === 4) {
+    body = `
+      <div style="text-align:center">
+        <div style="font-size:48px;margin-bottom:8px">${ob.emoji || '🎯'}</div>
+        <div style="color:var(--text);font-size:22px;font-weight:900">Dein Tagesziel</div>
+        <div style="color:var(--muted);font-size:13px;margin-top:4px">
+          Wie viel möchtest du täglich lernen?
+        </div>
+      </div>
+      <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:9px">
+        ${GOALS.map(g => `
+          <button onclick="ob.dailyGoal=${g.mins};obRenderStep()" style="
+            background:${ob.dailyGoal===g.mins ? t.primary+'22' : 'var(--card)'};
+            border:2px solid ${ob.dailyGoal===g.mins ? t.primary : 'var(--border)'};
+            border-radius:16px;padding:14px 16px;cursor:pointer;
+            display:flex;align-items:center;gap:14px;font-family:inherit;transition:all 0.15s">
+            <span style="font-size:28px">${g.emoji}</span>
+            <div style="text-align:left;flex:1">
+              <div style="color:var(--text);font-size:15px;font-weight:800">${g.label}</div>
+              <div style="color:var(--muted);font-size:12px">${g.desc}</div>
+            </div>
+            ${ob.dailyGoal===g.mins
+              ? `<span style="color:${t.primary};font-size:22px;font-weight:900">✓</span>` : ''}
+          </button>`).join('')}
+      </div>
+      ${backBtn}
+      ${nextBtn}`;
+  }
+
+  // ── STEP 5: Confirm
+  else if (ob.step === 5) {
+    const g = GOALS.find(g => g.mins === ob.dailyGoal) || GOALS[1];
+    body = `
+      <div style="text-align:center">
+        <div style="color:var(--muted);font-size:12px;font-weight:700;margin-bottom:6px">
+          ${isEdit ? 'ÄNDERUNGEN BESTÄTIGEN' : 'ALLES BEREIT?'}
+        </div>
+        <div style="color:var(--text);font-size:22px;font-weight:900">Dein Profil</div>
+      </div>
+      <div style="background:linear-gradient(135deg,${t.primary}18,${t.primary}06);
+        border:2px solid ${t.primary}55;border-radius:24px;padding:24px;
+        display:flex;flex-direction:column;align-items:center;gap:14px;animation:pop 0.4s ease">
+        <div style="width:76px;height:76px;border-radius:38px;font-size:40px;
+          background:${t.primary}22;border:3px solid ${t.primary};
+          display:flex;align-items:center;justify-content:center;
+          box-shadow:0 0 24px ${t.primary}44">${ob.emoji}</div>
+        <div style="color:${t.primary};font-size:24px;font-weight:900">${ob.name}</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
+          ${[
+            getTheme(ob.themeId).name,
+            g.emoji + ' ' + g.label + '/Tag',
+            isEdit ? '✏️ Bearbeitet' : '🇧🇬 A1 Start',
+          ].map(chip => `
+            <div style="background:${t.primary}22;border:1px solid ${t.primary}44;
+              border-radius:20px;padding:5px 12px;color:${t.primary};
+              font-size:12px;font-weight:800">${chip}</div>`).join('')}
+        </div>
+      </div>
+      ${isEdit ? '' : `<div style="color:var(--muted);font-size:12px;text-align:center;line-height:1.6">
+        Weitere Profile können später in der App hinzugefügt werden (max. ${MAX_PROFILES}).
+      </div>`}
+      ${backBtn}
+      ${nextBtn}`;
+  }
+
+  el.innerHTML = body;
+
+  // Focus name input on step 1
+  if (ob.step === 1) {
+    const inp = document.getElementById('ob-name-inp');
+    if (inp) setTimeout(() => { inp.focus(); inp.setSelectionRange(inp.value.length, inp.value.length); }, 200);
+  }
+
+  // Apply live theme preview on colour step
+  if (ob.step === 3) applyTheme(ob.themeId);
+}
+
+function obNext() {
+  if (ob.step === 1 && ob.name.trim().length < 2) return;
+  if (ob.step === 2 && !ob.emoji) return;
+  ob.step = Math.min(ob.step + 1, OB_STEPS - 1);
+  obRenderStep();
+}
+
+function obBack() {
+  ob.step = Math.max(ob.step - 1, 0);
+  obRenderStep();
+}
+
+function obRefreshNext() {
+  // Re-render just the next button state without full re-render
+  // (used for name input oninput — avoids losing cursor position)
+  const t = getTheme(ob.themeId);
+  const valid = ob.name.trim().length >= 2;
+  const btn = document.getElementById('ob-next-btn');
+  const inp = document.getElementById('ob-name-inp');
+  const prev = document.getElementById('ob-name-preview');
+  if (btn) {
+    btn.disabled = !valid;
+    btn.style.background = valid ? `linear-gradient(135deg,${t.primary},${t.primary}cc)` : 'var(--cardl)';
+    btn.style.color      = valid ? 'white' : 'var(--muted)';
+    btn.style.cursor     = valid ? 'pointer' : 'not-allowed';
+  }
+  if (inp) inp.style.borderColor = valid ? t.primary : 'var(--border)';
+  if (prev) prev.style.opacity = valid ? '1' : '0';
+  const nameSpan = prev?.querySelector('span:nth-child(2)');
+  if (nameSpan) nameSpan.textContent = ob.name || '...';
+}
+
+function obConfirm() {
+  if (!ob.name.trim() || !ob.emoji) return;
+  if (ob.editId) {
+    // Editing existing profile
+    persistProfile({
+      id:        ob.editId,
+      name:      ob.name.trim(),
+      emoji:     ob.emoji,
+      themeId:   ob.themeId,
+      dailyGoal: ob.dailyGoal,
+    });
+    hideOnboarding();
+    showToast('✅ Profil aktualisiert!');
+    onProfileLoaded(activeProfile);
+  } else {
+    // New profile
+    const profiles = loadProfiles();
+    if (profiles.length >= MAX_PROFILES) {
+      showToast('⚠️ Maximum ' + MAX_PROFILES + ' Profile erreicht');
+      return;
+    }
+    const newProfile = createProfile(ob);
+    profiles.push(newProfile);
+    saveProfiles(profiles);
+    LS.save('activeProfileId', newProfile.id);
+    hideOnboarding();
+    onProfileLoaded(newProfile);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PROFILE SELECTOR
+// ═══════════════════════════════════════════════════════════════
+
+function showProfileSelector() {
+  const profiles = loadProfiles();
+  const list = document.getElementById('ps-list');
+  // Header icon = active profile emoji
+  const hdr = document.getElementById('ps-avatar-header');
+  if (hdr) hdr.textContent = activeProfile?.emoji || '🦋';
+
+  let html = profiles.map(p => {
+    const t = getTheme(p.themeId);
+    const g = GOALS.find(g => g.mins === p.dailyGoal) || GOALS[1];
+    const isActive = activeProfile?.id === p.id;
+    return `
+      <div style="background:${t.primary}12;border:${isActive ? '2px' : '1px'} solid ${t.primary}${isActive?'88':'44'};
+        border-radius:20px;margin-bottom:10px;overflow:hidden">
+        <button onclick="selectProfile('${p.id}')" style="width:100%;background:none;border:none;
+          cursor:pointer;padding:16px 18px;display:flex;align-items:center;gap:14px;text-align:left;
+          font-family:inherit">
+          <div style="width:54px;height:54px;border-radius:27px;font-size:30px;flex-shrink:0;
+            background:${t.primary}22;border:2px solid ${t.primary}66;
+            display:flex;align-items:center;justify-content:center">${p.emoji}</div>
+          <div style="flex:1">
+            <div style="color:${t.primary};font-size:17px;font-weight:900">
+              ${p.name}${isActive ? ' ✓' : ''}
+            </div>
+            <div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap">
+              <span style="background:${t.primary}22;color:${t.primary};padding:2px 8px;
+                border-radius:8px;font-size:10px;font-weight:800">${t.name}</span>
+              <span style="background:${t.primary}22;color:${t.primary};padding:2px 8px;
+                border-radius:8px;font-size:10px;font-weight:800">${g.emoji} ${g.label}/Tag</span>
+              <span style="background:${t.primary}22;color:${t.primary};padding:2px 8px;
+                border-radius:8px;font-size:10px;font-weight:800">🔥 ${p.streak||0} Tage</span>
+            </div>
+          </div>
+          <span style="color:${t.primary};font-size:20px">›</span>
+        </button>
+        <div style="display:flex;border-top:1px solid ${t.primary}22">
+          <button onclick="editProfile('${p.id}')" style="flex:1;background:none;border:none;
+            border-right:1px solid ${t.primary}18;padding:9px;color:var(--muted);
+            font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">✏️ Bearbeiten</button>
+          <button onclick="confirmDeleteProfileInSelector('${p.id}')" style="flex:1;background:none;
+            border:none;padding:9px;color:var(--rose);font-size:11px;font-weight:700;
+            cursor:pointer;font-family:inherit">🗑️ Löschen</button>
+        </div>
+      </div>`;
+  }).join('');
+
+  if (profiles.length < MAX_PROFILES) {
+    html += `
+      <button onclick="addNewProfile()" style="width:100%;background:none;
+        border:2px dashed var(--border);border-radius:20px;padding:18px;
+        color:var(--muted);font-size:14px;font-weight:800;cursor:pointer;
+        display:flex;align-items:center;justify-content:center;gap:10px;font-family:inherit">
+        <span style="font-size:24px">➕</span> Neues Profil erstellen
+        <span style="color:var(--muted);font-size:11px">(${MAX_PROFILES - profiles.length} frei)</span>
+      </button>`;
+  }
+
+  list.innerHTML = html;
+  document.getElementById('ps-overlay').style.display = 'flex';
+}
+
+function hideProfileSelector() {
+  document.getElementById('ps-overlay').style.display = 'none';
+}
+
+function selectProfile(id) {
+  const profiles = loadProfiles();
+  const p = profiles.find(x => x.id === id);
+  if (!p) return;
+  LS.save('activeProfileId', id);
+  hideProfileSelector();
+  onProfileLoaded(p);
+}
+
+function editProfile(id) {
+  const profiles = loadProfiles();
+  const p = profiles.find(x => x.id === id);
+  if (!p) return;
+  hideProfileSelector();
+  showOnboarding(p); // re-use onboarding as editor
+}
+
+function addNewProfile() {
+  hideProfileSelector();
+  showOnboarding(null);
+}
+
+function confirmDeleteProfileInSelector(id) {
+  const profiles = loadProfiles();
+  const p = profiles.find(x => x.id === id);
+  if (!p) return;
+  const card = document.getElementById('ps-list');
+  // Replace just the button row with confirm UI
+  const el = document.querySelector(`[onclick="confirmDeleteProfileInSelector('${id}')"]`)?.closest('div[style*="border-radius:20px"]`);
+  // Simpler: use a toast-style confirm overlay
+  if (!confirm(`Profil "${p.name}" wirklich löschen? Alle Lernfortschritte werden entfernt.`)) return;
+  deleteProfileById(id);
+}
+
+function deleteProfileById(id) {
+  let profiles = loadProfiles();
+  profiles = profiles.filter(p => p.id !== id);
+  saveProfiles(profiles);
+  localStorage.removeItem('blapp_' + id + '_deck');
+  localStorage.removeItem('blapp_' + id + '_streak');
+  if (profiles.length === 0) {
+    hideProfileSelector();
+    showOnboarding(null);
+  } else {
+    if (activeProfile?.id === id) {
+      LS.save('activeProfileId', profiles[0].id);
+      onProfileLoaded(profiles[0]);
+    } else {
+      showProfileSelector();
+    }
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PROFIL SCREEN — edit via onboarding wizard, no bottom sheet
+// ═══════════════════════════════════════════════════════════════
 
 function renderProfil() {
   const p = activeProfile;
   if (!p) return;
-  const theme = getTheme(p.themeId);
-  const pct = getLernpfadPct();
-  const perfect = getPerfectCount();
-  const gifts = getGifts();
-  const el = document.getElementById('profil-content');
+  const theme  = getTheme(p.themeId);
+  const pct    = getLernpfadPct();
+  const perfect= getPerfectCount();
+  const gifts  = getGifts();
+  const el     = document.getElementById('profil-content');
+  const g      = GOALS.find(g => g.mins === p.dailyGoal) || GOALS[1];
 
   el.innerHTML = `
     <div style="padding:12px 16px 24px;display:flex;flex-direction:column;gap:16px">
 
       <!-- Header -->
-      <div style="display:flex;justify-content:space-between;align-items:center;padding-top:6px">
-        <div style="color:var(--text);font-size:17px;font-weight:900">👤 Mein Profil</div>
-        <div style="background:${theme.primary}22;color:${theme.primary};
-          padding:4px 10px;border-radius:10px;font-size:11px;font-weight:800">
-          ${LERNPFAD_LEVELS[LERNPFAD_LEVELS.length-1] ? getLernpfadLevel(pct).label : ''}
-        </div>
-      </div>
+      <div style="color:var(--text);font-size:17px;font-weight:900;padding-top:6px">👤 Mein Profil</div>
 
-      <!-- Profile card -->
+      <!-- Profile summary card -->
       <div style="background:linear-gradient(135deg,${theme.primary}18,${theme.primary}06);
         border:2px solid ${theme.primary}44;border-radius:22px;padding:20px;
         display:flex;flex-direction:column;align-items:center;gap:12px">
-        <!-- Avatar (tap to change emoji) -->
-        <button onclick="profilEditEmoji()" style="width:72px;height:72px;border-radius:36px;
-          font-size:38px;display:flex;align-items:center;justify-content:center;
+        <div style="width:72px;height:72px;border-radius:36px;font-size:38px;
           background:${theme.primary}22;border:3px solid ${theme.primary};
-          box-shadow:0 0 20px ${theme.primary}44;cursor:pointer;position:relative">
+          box-shadow:0 0 20px ${theme.primary}44;display:flex;align-items:center;justify-content:center">
           ${p.emoji}
-          <div style="position:absolute;bottom:-2px;right:-2px;width:22px;height:22px;
-            border-radius:11px;background:${theme.primary};display:flex;align-items:center;
-            justify-content:center;font-size:11px;border:2px solid var(--bg)">✏️</div>
-        </button>
+        </div>
         <div style="color:${theme.primary};font-size:22px;font-weight:900">${p.name}</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
+          <span style="background:${theme.primary}22;border:1px solid ${theme.primary}44;
+            border-radius:16px;padding:4px 12px;color:${theme.primary};font-size:12px;font-weight:800">
+            🎨 ${theme.name}
+          </span>
+          <span style="background:${theme.primary}22;border:1px solid ${theme.primary}44;
+            border-radius:16px;padding:4px 12px;color:${theme.primary};font-size:12px;font-weight:800">
+            ${g.emoji} ${g.label}/Tag
+          </span>
+          <span style="background:${theme.primary}22;border:1px solid ${theme.primary}44;
+            border-radius:16px;padding:4px 12px;color:${theme.primary};font-size:12px;font-weight:800">
+            🔥 ${p.streak||0} Tage
+          </span>
+        </div>
+        <!-- Edit button -->
+        <button onclick="showOnboarding(activeProfile)" style="
+          background:linear-gradient(135deg,${theme.primary},${theme.primary}cc);
+          border:none;border-radius:14px;padding:11px 24px;color:white;
+          font-size:13px;font-weight:900;cursor:pointer;font-family:inherit;width:100%">
+          ✏️ Profil bearbeiten
+        </button>
       </div>
 
-      <!-- Editable fields -->
-      <div class="card">
-        <div class="label" style="margin-bottom:10px">Profil bearbeiten</div>
-        ${[
-          { key:'name',  icon:'✏️', label:'Name',          val: p.name },
-          { key:'goal',  icon:'🎯', label:'Tagesziel',     val: (GOALS.find(g=>g.mins===p.dailyGoal)||GOALS[1]).label + ' · ' + p.dailyGoal + ' Min' },
-          { key:'theme', icon:'🎨', label:'Farbthema',     val: getTheme(p.themeId).name },
-          { key:'emoji', icon:'😊', label:'Avatar Emoji',  val: p.emoji },
-        ].map(f => `
-          <button onclick="profilEdit('${f.key}')" style="width:100%;background:none;border:none;
-            display:flex;align-items:center;gap:12px;padding:11px 0;
-            border-bottom:1px solid var(--border);cursor:pointer;text-align:left">
-            <span style="font-size:18px">${f.icon}</span>
-            <div style="flex:1">
-              <div style="color:var(--muted);font-size:10px;font-weight:800;letter-spacing:0.5px">${f.label.toUpperCase()}</div>
-              <div style="color:var(--text);font-size:14px;font-weight:700;margin-top:1px">${f.val}</div>
-            </div>
-            <span style="color:var(--muted);font-size:14px">›</span>
-          </button>`).join('')}
-      </div>
-
-      <!-- Lernpfad + Geschenke -->
+      <!-- Lernpfad & Geschenke -->
       <div class="card">
         <div class="label" style="margin-bottom:12px">Lernpfad & Erfolgs-Geschenke</div>
         <div style="display:flex;justify-content:space-between;margin-bottom:6px">
@@ -3003,72 +3423,69 @@ function renderProfil() {
             const reached = pct >= gl.pct;
             const gift = gifts[gl.step];
             const prev = gl.step === 1 ? 0 : GIFT_LEVELS[gl.step-2].pct;
-            const segPct = Math.min(100, Math.max(0, Math.round((pct - prev) / (gl.pct - prev) * 100)));
-            return `<div style="background:${reached ? theme.primary+'18' : 'rgba(255,255,255,0.04)'};
-              border:1px solid ${reached ? theme.primary+'55' : 'var(--border)'};
-              border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:12px;
-              ${reached ? 'animation:pop 0.4s ease' : ''}">
-              <!-- Gift icon -->
-              <div style="font-size:28px;flex-shrink:0;
-                filter:${reached ? 'none' : 'grayscale(1) opacity(0.4)'}">
-                ${reached ? gl.emoji : '🔒'}
-              </div>
-              <div style="flex:1">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-                  <span style="color:${reached ? theme.primary : 'var(--muted)'};
-                    font-size:12px;font-weight:800">Stufe ${gl.step} — ${gl.label}</span>
-                  <span style="color:${reached ? theme.primary : 'var(--muted)'};
-                    font-size:11px;font-weight:700">ab ${gl.pct}%</span>
+            const segPct = Math.min(100, Math.max(0,
+              Math.round((pct - prev) / (gl.pct - prev) * 100)));
+            return `
+              <div style="background:${reached ? theme.primary+'18' : 'rgba(255,255,255,0.04)'};
+                border:1px solid ${reached ? theme.primary+'55' : 'var(--border)'};
+                border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:12px">
+                <div style="font-size:28px;flex-shrink:0;
+                  filter:${reached ? 'none' : 'grayscale(1) opacity(0.4)'}">
+                  ${reached ? gl.emoji : '🔒'}
                 </div>
-                ${reached
-                  ? `<div style="color:var(--text);font-size:13px;font-weight:700">
-                       🎁 Frag Papa nach deinem Geschenk!
-                     </div>`
-                  : `<div style="background:rgba(255,255,255,0.06);border-radius:6px;height:5px">
-                       <div style="width:${segPct}%;height:100%;border-radius:6px;
-                         background:var(--muted)"></div>
-                     </div>
-                     <div style="color:var(--muted);font-size:11px;margin-top:3px">
-                       Noch ${Math.ceil((gl.pct/100)*LERNPFAD_BASE) - perfect} Sätze perfekt
-                     </div>`
-                }
-              </div>
-            </div>`;
+                <div style="flex:1">
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+                    <span style="color:${reached ? theme.primary : 'var(--muted)'};
+                      font-size:12px;font-weight:800">Stufe ${gl.step} — ${gl.label}</span>
+                    <span style="color:${reached ? theme.primary : 'var(--muted)'};
+                      font-size:11px">ab ${gl.pct}%</span>
+                  </div>
+                  ${reached
+                    ? `<div style="color:var(--text);font-size:13px;font-weight:700">
+                         🎁 Frag Papa nach deinem Geschenk!
+                       </div>`
+                    : `<div style="background:rgba(255,255,255,0.06);border-radius:5px;height:5px">
+                         <div style="width:${segPct}%;height:100%;border-radius:5px;background:var(--muted)"></div>
+                       </div>
+                       <div style="color:var(--muted);font-size:11px;margin-top:3px">
+                         Noch ${Math.max(0, Math.ceil((gl.pct/100)*LERNPFAD_BASE) - perfect)} Sätze perfekt
+                       </div>`
+                  }
+                </div>
+              </div>`;
           }).join('')}
         </div>
       </div>
 
-      <!-- Lernstatistik -->
+      <!-- Stats -->
       <div class="card">
         <div class="label" style="margin-bottom:10px">Lernstatistik</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
           ${[
-            { l:'Perfekt', v: perfect,       c: theme.primary },
-            { l:'Gesamt',  v: getTotalSentences(), c:'var(--text)' },
-            { l:'Serie',   v: (state.streak?.count||0)+'🔥', c:'var(--gold)' },
-            { l:'Ziel/Tag',v: p.dailyGoal+'m', c:'var(--teal)' },
-          ].map(s=>`<div style="flex:1;min-width:70px;background:var(--cardd);
-            border-radius:12px;padding:10px 6px;text-align:center;border:1px solid var(--border)">
-            <div style="color:${s.c};font-size:16px;font-weight:900">${s.v}</div>
-            <div style="color:var(--muted);font-size:9px;font-weight:800;margin-top:2px">${s.l.toUpperCase()}</div>
-          </div>`).join('')}
+            { l:'Perfekt',  v: perfect,              c: theme.primary },
+            { l:'Gesamt',   v: getTotalSentences(),  c: 'var(--text)' },
+            { l:'Serie',    v: (p.streak||0)+'🔥',   c: 'var(--gold)' },
+            { l:'Ziel/Tag', v: p.dailyGoal+'m',      c: 'var(--teal)' },
+          ].map(s => `
+            <div style="flex:1;min-width:70px;background:var(--cardd);border-radius:12px;
+              padding:10px 6px;text-align:center;border:1px solid var(--border)">
+              <div style="color:${s.c};font-size:17px;font-weight:900">${s.v}</div>
+              <div style="color:var(--muted);font-size:9px;font-weight:800;margin-top:2px">
+                ${s.l.toUpperCase()}
+              </div>
+            </div>`).join('')}
         </div>
       </div>
 
-      <!-- Profile switching -->
+      <!-- Profile management -->
       <div class="card" style="display:flex;flex-direction:column;gap:8px">
         <div class="label" style="margin-bottom:4px">Profile</div>
-        <button onclick="showProfileSelector()" style="width:100%;background:${theme.primary}18;
-          border:1px solid ${theme.primary}44;border-radius:14px;padding:12px;
-          color:${theme.primary};font-size:13px;font-weight:800;cursor:pointer;
+        <button onclick="showProfileSelector()" style="width:100%;
+          background:${theme.primary}18;border:1px solid ${theme.primary}44;
+          border-radius:14px;padding:12px;color:${theme.primary};
+          font-size:13px;font-weight:800;cursor:pointer;font-family:inherit;
           display:flex;align-items:center;justify-content:center;gap:8px">
-          👥 Profil wechseln
-        </button>
-        <button onclick="confirmDeleteCurrentProfile()" style="width:100%;background:rgba(255,107,107,0.12);
-          border:1px solid rgba(255,107,107,0.33);border-radius:14px;padding:12px;
-          color:var(--rose);font-size:13px;font-weight:800;cursor:pointer;
-          display:flex;align-items:center;justify-content:center;gap:8px">
-          🗑️ Dieses Profil löschen
+          👥 Profil wechseln / verwalten
         </button>
       </div>
 
@@ -3076,712 +3493,6 @@ function renderProfil() {
   `;
 }
 
-// ── Bottom-sheet profile editor
-// Temp state for selections before Speichern
-let _tmpGoal  = null;
-let _tmpTheme = null;
-let _tmpEmoji = null;
-
-function profilSave(field, value) {
-  if (!activeProfile) return;
-  // Validate name
-  if (field === 'name' && (!value || value.trim().length < 2)) {
-    showToast('⚠️ Name muss mindestens 2 Zeichen haben');
-    return;
-  }
-  const val = (field === 'name') ? value.trim() : value;
-  // Update in profiles array
-  const profiles = LS.load('profiles', []);
-  const updated = profiles.map(p =>
-    p.id === activeProfile.id ? { ...p, [field]: val } : p
-  );
-  LS.save('profiles', updated);
-  LS.save('activeProfileId', activeProfile.id);
-  activeProfile = { ...activeProfile, [field]: val };
-  // Apply theme immediately if changed
-  if (field === 'theme') applyTheme(val);
-  closeProfilSheet();
-  showToast('✅ ' + fieldLabel(field) + ' gespeichert!');
-  // Navigate to Home and refresh
-  nav('home');
-}
-
-function fieldLabel(field) {
-  return { name:'Name', goal:'Tagesziel', theme:'Farbthema', emoji:'Avatar' }[field] || field;
-}
-
-function profilEdit(field) {
-  const p = activeProfile;
-  const theme = getTheme(p.themeId);
-  const content = document.getElementById('profil-edit-sheet-content');
-  if (!content) return;
-
-  if (field === 'name') {
-    content.innerHTML = `
-      <div style="color:var(--text);font-size:16px;font-weight:900;margin-bottom:14px">✏️ Name ändern</div>
-      <input id="ps-name" type="text" value="${p.name}" maxlength="20"
-        style="width:100%;background:var(--cardd);border:2px solid ${theme.primary};
-          border-radius:14px;padding:14px;color:var(--text);font-size:18px;
-          font-weight:700;text-align:center;font-family:inherit"/>
-      <div style="display:flex;gap:8px;margin-top:12px">
-        <button onclick="closeProfilSheet()" class="btn-secondary" style="flex:1;padding:12px;font-family:inherit">
-          Abbrechen
-        </button>
-        <button onclick="profilSave('name', document.getElementById('ps-name').value)"
-          style="flex:2;background:linear-gradient(135deg,${theme.primary},${theme.primary}aa);
-            border:none;border-radius:12px;padding:12px;color:white;
-            font-size:14px;font-weight:900;cursor:pointer;font-family:inherit">
-          Speichern ✓
-        </button>
-      </div>`;
-    openProfilSheet();
-    setTimeout(() => { const i=document.getElementById('ps-name'); if(i){i.focus();i.select();} }, 300);
-  }
-
-  else if (field === 'goal') {
-    _tmpGoal = p.dailyGoal;
-    content.innerHTML = `
-      <div style="color:var(--text);font-size:16px;font-weight:900;margin-bottom:14px">🎯 Tagesziel wählen</div>
-      <div id="goal-options" style="display:flex;flex-direction:column;gap:9px">
-        ${GOALS.map(g => `
-          <button id="go-${g.mins}" onclick="tmpSelectGoal(${g.mins})" style="
-            background:${p.dailyGoal===g.mins ? theme.primary+'22' : 'var(--cardd)'};
-            border:2px solid ${p.dailyGoal===g.mins ? theme.primary : 'var(--border)'};
-            border-radius:14px;padding:13px 16px;
-            display:flex;align-items:center;gap:12px;cursor:pointer;font-family:inherit;
-            transition:all 0.15s">
-            <span style="font-size:24px">${g.emoji}</span>
-            <div style="text-align:left;flex:1">
-              <div style="color:var(--text);font-size:14px;font-weight:800">${g.label}</div>
-              <div style="color:var(--muted);font-size:11px">${g.desc}</div>
-            </div>
-            <span id="go-check-${g.mins}" style="color:${theme.primary};font-size:20px">
-              ${p.dailyGoal===g.mins ? '✓' : ''}
-            </span>
-          </button>`).join('')}
-      </div>
-      <div style="display:flex;gap:8px;margin-top:14px">
-        <button onclick="closeProfilSheet()" class="btn-secondary" style="flex:1;padding:12px;font-family:inherit">
-          Abbrechen
-        </button>
-        <button onclick="profilSave('goal', _tmpGoal)"
-          style="flex:2;background:linear-gradient(135deg,${theme.primary},${theme.primary}aa);
-            border:none;border-radius:12px;padding:12px;color:white;
-            font-size:14px;font-weight:900;cursor:pointer;font-family:inherit">
-          Speichern ✓
-        </button>
-      </div>`;
-    openProfilSheet();
-  }
-
-  else if (field === 'theme') {
-    _tmpTheme = p.themeId;
-    content.innerHTML = `
-      <div style="color:var(--text);font-size:16px;font-weight:900;margin-bottom:14px">🎨 Farbthema wählen</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px" id="theme-options">
-        ${THEMES.map(t => `
-          <button id="th-${t.id}" onclick="tmpSelectTheme('${t.id}')" style="
-            background:${p.themeId===t.id ? t.primary+'22' : 'var(--cardd)'};
-            border:2px solid ${p.themeId===t.id ? t.primary : 'var(--border)'};
-            border-radius:14px;padding:13px 10px;
-            display:flex;flex-direction:column;align-items:center;gap:8px;
-            cursor:pointer;font-family:inherit;transition:all 0.15s">
-            <div id="th-circle-${t.id}" style="width:38px;height:38px;border-radius:19px;
-              background:linear-gradient(135deg,${t.primary},${t.primary}88);
-              display:flex;align-items:center;justify-content:center;
-              font-size:18px;color:white;font-weight:900;
-              ${p.themeId===t.id ? 'box-shadow:0 0 14px '+t.primary+'66' : ''}">
-              ${p.themeId===t.id ? '✓' : ''}
-            </div>
-            <span id="th-label-${t.id}" style="color:${p.themeId===t.id ? t.primary : 'var(--text)'};
-              font-size:12px;font-weight:800">${t.name}</span>
-          </button>`).join('')}
-      </div>
-      <div style="display:flex;gap:8px;margin-top:14px">
-        <button onclick="closeProfilSheet()" class="btn-secondary" style="flex:1;padding:12px;font-family:inherit">
-          Abbrechen
-        </button>
-        <button id="theme-save-btn" onclick="if(!this.disabled) profilSave('theme', _tmpTheme)"
-          disabled
-          style="flex:2;background:linear-gradient(135deg,var(--primary),var(--primary)aa);
-            border:none;border-radius:12px;padding:12px;color:white;
-            font-size:14px;font-weight:900;cursor:not-allowed;font-family:inherit;opacity:0.4">
-          Speichern ✓
-        </button>
-      </div>`;
-    openProfilSheet();
-  }
-
-  else if (field === 'emoji') {
-    profilEditEmoji();
-  }
-}
-
-// Temp select helpers — highlight selection before saving
-function tmpSelectGoal(mins) {
-  _tmpGoal = mins;
-  const theme = getTheme(activeProfile.themeId);
-  const changed = mins !== activeProfile.dailyGoal;
-  GOALS.forEach(g => {
-    const btn = document.getElementById('go-'+g.mins);
-    const chk = document.getElementById('go-check-'+g.mins);
-    if (btn) {
-      btn.style.background  = g.mins===mins ? theme.primary+'22' : 'var(--cardd)';
-      btn.style.borderColor = g.mins===mins ? theme.primary : 'var(--border)';
-    }
-    if (chk) chk.textContent = g.mins===mins ? '✓' : '';
-  });
-  // Enable/disable save button
-  const saveBtn = document.getElementById('goal-save-btn');
-  if (saveBtn) {
-    saveBtn.disabled = !changed;
-    saveBtn.style.opacity = changed ? '1' : '0.4';
-    saveBtn.style.cursor  = changed ? 'pointer' : 'not-allowed';
-  }
-}
-
-function tmpSelectTheme(id) {
-  _tmpTheme = id;
-  const changed = id !== activeProfile.themeId;
-  THEMES.forEach(t => {
-    const btn    = document.getElementById('th-'+t.id);
-    const circle = document.getElementById('th-circle-'+t.id);
-    const label  = document.getElementById('th-label-'+t.id);
-    if (btn) {
-      btn.style.background    = t.id===id ? t.primary+'22' : 'var(--cardd)';
-      btn.style.borderColor   = t.id===id ? t.primary : 'var(--border)';
-    }
-    if (circle) {
-      circle.textContent      = t.id===id ? '✓' : '';
-      circle.style.boxShadow  = t.id===id ? '0 0 14px '+t.primary+'66' : 'none';
-    }
-    if (label) {
-      label.style.color = t.id===id ? t.primary : 'var(--text)';
-    }
-  });
-  // Live preview
-  applyTheme(id);
-  // Enable/disable save button
-  const saveBtn = document.getElementById('theme-save-btn');
-  if (saveBtn) {
-    saveBtn.disabled = !changed;
-    saveBtn.style.opacity = changed ? '1' : '0.4';
-    saveBtn.style.cursor  = changed ? 'pointer' : 'not-allowed';
-  }
-}
-
-function profilEditEmoji() {
-  const p = activeProfile;
-  const theme = getTheme(p.themeId);
-  _tmpEmoji = p.emoji;
-  const content = document.getElementById('profil-edit-sheet-content');
-  if (!content) return;
-  const labels = ['Tiere', 'Natur & Magie', 'Spaß & Hobbys'];
-  content.innerHTML = `
-    <div style="color:var(--text);font-size:16px;font-weight:900;margin-bottom:6px">😊 Avatar wählen</div>
-    <div id="emoji-selected-preview" style="text-align:center;font-size:40px;margin-bottom:10px">${p.emoji}</div>
-    ${['animals','nature','hobby'].map((cat,ci) => `
-      <div style="color:var(--muted);font-size:10px;font-weight:800;letter-spacing:1px;
-        text-transform:uppercase;margin:8px 0 6px">${labels[ci]}</div>
-      <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:4px">
-        ${EMOJI_SETS[cat].map(e=>`
-          <button id="em-btn-${e}" onclick="tmpSelectEmoji('${e}')" style="
-            width:46px;height:46px;border-radius:12px;font-size:24px;
-            background:${p.emoji===e ? theme.primary+'33' : 'var(--cardd)'};
-            border:2px solid ${p.emoji===e ? theme.primary : 'var(--border)'};
-            cursor:pointer;transition:all 0.15s;font-family:inherit">${e}</button>`
-        ).join('')}
-      </div>`).join('')}
-    <div style="display:flex;gap:8px;margin-top:14px">
-      <button onclick="closeProfilSheet()" class="btn-secondary" style="flex:1;padding:12px;font-family:inherit">
-        Abbrechen
-      </button>
-      <button onclick="profilSave('emoji', _tmpEmoji)"
-        style="flex:2;background:linear-gradient(135deg,${theme.primary},${theme.primary}aa);
-          border:none;border-radius:12px;padding:12px;color:white;
-          font-size:14px;font-weight:900;cursor:pointer;font-family:inherit">
-        Speichern ✓
-      </button>
-    </div>`;
-  openProfilSheet();
-}
-
-function tmpSelectEmoji(e) {
-  _tmpEmoji = e;
-  const theme = getTheme(activeProfile.themeId);
-  // Update preview
-  const prev = document.getElementById('emoji-selected-preview');
-  if (prev) prev.textContent = e;
-  // Update button highlights
-  document.querySelectorAll('[id^="em-btn-"]').forEach(btn => {
-    const btnEmoji = btn.textContent;
-    btn.style.background  = btnEmoji===e ? theme.primary+'33' : 'var(--cardd)';
-    btn.style.borderColor = btnEmoji===e ? theme.primary : 'var(--border)';
-  });
-}
-
-function openProfilSheet() {
-  const sheet    = document.getElementById('profil-edit-sheet');
-  const backdrop = document.getElementById('profil-edit-backdrop');
-  if (sheet)    { sheet.style.display = 'block'; sheet.style.animation = 'slideUp 0.3s ease'; }
-  if (backdrop) backdrop.style.display = 'block';
-}
-
-function closeProfilSheet() {
-  const sheet    = document.getElementById('profil-edit-sheet');
-  const backdrop = document.getElementById('profil-edit-backdrop');
-  if (sheet)    sheet.style.display = 'none';
-  if (backdrop) backdrop.style.display = 'none';
-  // Reset temp theme preview if cancelled
-  if (_tmpTheme && activeProfile && _tmpTheme !== activeProfile.themeId) {
-    applyTheme(activeProfile.themeId);
-  }
-  _tmpGoal = null; _tmpTheme = null; _tmpEmoji = null;
-}
-
-function profilCancelEdit() {
-  closeProfilSheet();
-}
-
-
-
-
-
-function confirmDeleteCurrentProfile() {
-  const content = document.getElementById('profil-edit-sheet-content');
-  if (!content) return;
-  content.innerHTML = `
-    <div style="background:rgba(255,107,107,0.12);border:1px solid rgba(255,107,107,0.44);
-      border-radius:16px;padding:16px;animation:pop 0.3s ease">
-      <div style="color:var(--rose);font-size:14px;font-weight:800;margin-bottom:8px">
-        ⚠️ Profil wirklich löschen?
-      </div>
-      <div style="color:var(--muted);font-size:12px;margin-bottom:12px;line-height:1.5">
-        Alle Lernfortschritte für "${activeProfile.name}" werden dauerhaft gelöscht.
-      </div>
-      <div style="display:flex;gap:8px">
-        <button onclick="closeProfilSheet()" class="btn-secondary" style="flex:1;padding:10px">Nein</button>
-        <button onclick="deleteProfile('${activeProfile.id}')" style="flex:2;background:var(--rose);
-          border:none;border-radius:12px;padding:10px;color:white;font-size:13px;
-          font-weight:900;cursor:pointer;font-family:inherit">Ja, löschen</button>
-      </div>
-    </div>`;
-  openProfilSheet();
-}
-
-// ═══════════════════════════════════════════════════════════════
-// ADMIN: ERFOLGS-GESCHENKE section
-// ═══════════════════════════════════════════════════════════════
-
-function renderAdminGifts() {
-  const gifts = getGifts();
-  const theme = getTheme(activeProfile?.themeId || 'purple');
-  return `
-    <div style="margin-top:8px">
-      <div class="label" style="margin-bottom:10px">🎁 Erfolgs-Geschenke (Stufen 1–5)</div>
-      <div style="background:rgba(56,189,248,0.1);border-radius:10px;padding:9px 12px;
-        border:1px solid rgba(56,189,248,0.33);color:var(--muted);font-size:11px;
-        line-height:1.6;margin-bottom:12px">
-        💡 Schreibe für jede Stufe eine persönliche Überraschungs-Nachricht.
-        Das Kind sieht nur "Frag Papa!" — die Nachricht bleibt hier verborgen bis du sie verrätst.
-      </div>
-      ${GIFT_LEVELS.map(gl => {
-        const gift = gifts[gl.step];
-        return `<div style="background:var(--cardd);border-radius:14px;padding:12px 14px;
-          border:1px solid var(--border);margin-bottom:8px">
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-            <span style="font-size:22px">${gl.emoji}</span>
-            <div style="flex:1">
-              <div style="color:var(--text);font-size:13px;font-weight:800">
-                Stufe ${gl.step} — ${gl.label} (ab ${gl.pct}%)
-              </div>
-              <div style="color:${gift.unlocked ? 'var(--teal)' : 'var(--muted)'};font-size:11px">
-                ${gift.unlocked ? '✓ Bereits freigeschaltet' : 'Noch nicht erreicht'}
-              </div>
-            </div>
-          </div>
-          <textarea id="gift-msg-${gl.step}" rows="2" maxlength="120"
-            placeholder="z.B. Kinobesuch mit Papa 🎬 — nur du siehst das hier..."
-            style="width:100%;background:var(--card);border:1px solid var(--border);
-              border-radius:9px;padding:8px 10px;color:var(--text);font-size:12px;
-              resize:none;font-family:inherit">${gift.message || ''}</textarea>
-          <button onclick="saveGiftMessage(${gl.step})" style="
-            margin-top:7px;width:100%;
-            background:linear-gradient(135deg,${theme.primary},${theme.primary}aa);
-            border:none;border-radius:9px;padding:8px;color:white;
-            font-size:11px;font-weight:800;cursor:pointer">
-            💾 Nachricht speichern
-          </button>
-        </div>`;
-      }).join('')}
-    </div>`;
-}
-
-function saveGiftMessage(step) {
-  const msg = document.getElementById('gift-msg-'+step)?.value?.trim() || '';
-  requirePin(() => {
-    const gifts = getGifts();
-    gifts[step].message = msg;
-    saveGifts(gifts);
-    showToast('✅ Geschenk-Nachricht gespeichert!');
-  });
-}
-
-// ═══════════════════════════════════════════════════════════════
-// PROFILE & ONBOARDING SYSTEM
-// ═══════════════════════════════════════════════════════════════
-
-const MAX_PROFILES = 4;
-const THEMES = [
-  {id:"rose",   name:"Rosa",    primary:"#FF6B6B"},
-  {id:"purple", name:"Lila",    primary:"#A855F7"},
-  {id:"teal",   name:"Türkis",  primary:"#06D6A0"},
-  {id:"gold",   name:"Gold",    primary:"#FFD166"},
-  {id:"blue",   name:"Blau",    primary:"#38BDF8"},
-  {id:"green",  name:"Grün",    primary:"#4ADE80"},
-];
-const GOALS = [
-  {mins:5,  label:"5 Min",  desc:"Kurz & knackig",      emoji:"⚡"},
-  {mins:10, label:"10 Min", desc:"Täglich solide",       emoji:"🎯"},
-  {mins:15, label:"15 Min", desc:"Richtig durchstarten", emoji:"🚀"},
-  {mins:20, label:"20 Min", desc:"Intensiv lernen",      emoji:"🏆"},
-];
-const EMOJI_SETS = {
-  animals:["🦋","🐬","🦄","🐱","🦊","🐼","🐨","🦁","🐸","🐙"],
-  nature: ["🌸","🌺","🌻","⭐","🌙","🌈","🔮","💎","🍀","🌿"],
-  hobby:  ["🎵","🎨","📚","✏️","🎭","🎪","🎠","🎡","🏆","🎯"],
-};
-
-// Active profile state
-let activeProfile = null;
-
-// ── ob state
-let obStep = 0;
-let obData = {name:"", emoji:"", themeId:"purple", dailyGoal:10};
-
-function getTheme(id){ return THEMES.find(t=>t.id===id)||THEMES[1]; }
-function getGoal(mins){ return GOALS.find(g=>g.mins===mins)||GOALS[1]; }
-
-// Apply theme colour to CSS variables
-function applyTheme(themeId){
-  const t = getTheme(themeId);
-  const r = document.documentElement.style;
-  r.setProperty('--primary', t.primary);
-  // Tint card backgrounds slightly toward theme colour
-  r.setProperty('--theme-glow', t.primary + '22');
-  r.setProperty('--theme-border', t.primary + '44');
-  // Update nav active colour
-  document.querySelectorAll('.nav-btn.active .nav-label').forEach(el => {
-    el.style.color = t.primary;
-  });
-  document.querySelectorAll('.nav-btn.active .nav-bar').forEach(el => {
-    el.style.background = t.primary;
-  });
-  // Update start button if already rendered
-  const sb = document.getElementById('start-btn');
-  if(sb) renderHome();
-}
-
-// ── ONBOARDING INIT
-function initOnboarding(){
-  // Build emoji grids
-  ['animals','nature','hobby'].forEach(cat=>{
-    const el=document.getElementById('emoji-'+cat);
-    if(!el) return;
-    el.innerHTML=EMOJI_SETS[cat].map(e=>
-      `<button class="emoji-btn" onclick="obSelectEmoji('${e}')">${e}</button>`
-    ).join('');
-  });
-  // Build theme buttons
-  const tb=document.getElementById('theme-btns');
-  if(tb) tb.innerHTML=THEMES.map(t=>`
-    <button class="theme-btn" id="theme-btn-${t.id}" onclick="obSelectTheme('${t.id}')">
-      <div class="theme-circle" id="theme-circle-${t.id}" style="background:linear-gradient(135deg,${t.primary},${t.primary}88)"></div>
-      <div style="text-align:left">
-        <div style="font-size:15px;font-weight:800;color:var(--text)">${t.name}</div>
-        <div style="font-size:11px;color:var(--muted)">Deine App-Akzentfarbe</div>
-      </div>
-      <div style="margin-left:auto;display:flex;gap:3px">
-        ${[t.primary,t.primary+'88',t.primary+'44'].map((c,i)=>`<div style="width:10px;height:${10+i*4}px;border-radius:3px;background:${c}"></div>`).join('')}
-      </div>
-    </button>`).join('');
-  // Build goal buttons
-  const gb=document.getElementById('goal-btns');
-  if(gb) gb.innerHTML=GOALS.map(g=>`
-    <button class="goal-btn" id="goal-btn-${g.mins}" onclick="obSelectGoal(${g.mins})">
-      <span style="font-size:28px">${g.emoji}</span>
-      <div style="text-align:left">
-        <div style="font-size:16px;font-weight:800;color:var(--text)">${g.label}</div>
-        <div style="font-size:12px;color:var(--muted)">${g.desc}</div>
-      </div>
-    </button>`).join('');
-  // Default selections
-  obSelectTheme('purple');
-  obSelectGoal(10);
-  obShowStep(0);
-}
-
-function obShowStep(n){
-  obStep=n;
-  document.querySelectorAll('.ob-screen').forEach(s=>s.classList.remove('active'));
-  const el=document.getElementById('ob-step-'+n);
-  if(el) el.classList.add('active');
-  // Progress bar
-  const fill=document.getElementById('ob-fill');
-  if(fill){ fill.style.width=(n===0?0:Math.round((n/5)*100))+'%'; fill.style.background='linear-gradient(90deg,'+getTheme(obData.themeId).primary+','+getTheme(obData.themeId).primary+'88)'; }
-  // Step-specific updates
-  if(n===2){ const p=document.getElementById('ob-theme-preview-icon'); if(p&&obData.emoji) p.textContent=obData.emoji; }
-  if(n===3){ const p=document.getElementById('ob-goal-icon'); if(p&&obData.emoji) p.textContent=obData.emoji; }
-  if(n===5) obBuildConfirm();
-}
-
-function obNext(){
-  if(obStep===0){ obShowStep(1); return; }
-  if(obStep===1){ if(obData.name.trim().length<2) return; obShowStep(2); return; }
-  if(obStep===2){ if(!obData.emoji) return; obShowStep(3); return; }
-  if(obStep===3){ obShowStep(4); return; }
-  if(obStep===4){ obShowStep(5); return; }
-}
-function obBack(){
-  if(obStep>0) obShowStep(obStep-1);
-}
-
-function obNameInput(){
-  const val=document.getElementById('ob-name-input').value;
-  obData.name=val;
-  const valid=val.trim().length>=2;
-  const inp=document.getElementById('ob-name-input');
-  inp.style.borderColor=valid?getTheme(obData.themeId).primary:'var(--border)';
-  const btn=document.getElementById('ob-name-next');
-  if(btn){ btn.disabled=!valid; btn.style.background=valid?'linear-gradient(135deg,var(--purple),#6366f1)':'var(--cardl)'; btn.style.color=valid?'white':'var(--muted)'; }
-  const preview=document.getElementById('ob-name-preview');
-  const nameShow=document.getElementById('ob-name-show');
-  if(preview&&nameShow){ preview.style.display=valid?'block':'none'; nameShow.textContent=val.trim(); }
-}
-
-function obSelectEmoji(e){
-  obData.emoji=e;
-  document.querySelectorAll('.emoji-btn').forEach(b=>{ b.classList.remove('selected'); b.style.borderColor='var(--border)'; b.style.background='var(--card)'; b.style.boxShadow='none'; });
-  event.target.classList.add('selected');
-  const tc=getTheme(obData.themeId).primary;
-  event.target.style.borderColor=tc; event.target.style.background=tc+'33'; event.target.style.boxShadow='0 0 12px '+tc+'44';
-  const prev=document.getElementById('ob-emoji-preview'); if(prev) prev.textContent=e;
-  const btn=document.getElementById('ob-emoji-next');
-  if(btn){ btn.disabled=false; btn.style.background='linear-gradient(135deg,var(--rose),#ff8e53)'; btn.style.color='white'; }
-}
-
-function obSelectTheme(id){
-  obData.themeId=id;
-  const t=getTheme(id);
-  THEMES.forEach(th=>{
-    const btn=document.getElementById('theme-btn-'+th.id);
-    const circle=document.getElementById('theme-circle-'+th.id);
-    if(btn){ btn.style.background=th.id===id?t.primary+'18':'var(--card)'; btn.style.borderColor=th.id===id?t.primary:'var(--border)'; }
-    if(circle){ circle.textContent=th.id===id?'✓':''; circle.style.borderColor=th.id===id?t.primary:'transparent'; circle.style.color=th.id===id?'white':'transparent'; }
-  });
-  const nextBtn=document.getElementById('ob-theme-next');
-  if(nextBtn){ nextBtn.style.background='linear-gradient(135deg,'+t.primary+','+t.primary+'aa)'; }
-  const progressFill=document.getElementById('ob-fill');
-  if(progressFill) progressFill.style.background='linear-gradient(90deg,'+t.primary+','+t.primary+'88)';
-}
-
-function obSelectGoal(mins){
-  obData.dailyGoal=mins;
-  const t=getTheme(obData.themeId);
-  GOALS.forEach(g=>{
-    const btn=document.getElementById('goal-btn-'+g.mins);
-    if(btn){
-      btn.style.background=g.mins===mins?t.primary+'18':'var(--card)';
-      btn.style.borderColor=g.mins===mins?t.primary:'var(--border)';
-      // Add/remove checkmark
-      const existing=btn.querySelector('.goal-check'); if(existing) existing.remove();
-      if(g.mins===mins){ const chk=document.createElement('div'); chk.className='goal-check'; chk.style.cssText='margin-left:auto;color:'+t.primary+';font-size:20px'; chk.textContent='✓'; btn.appendChild(chk); }
-    }
-  });
-  const nextBtn=document.getElementById('ob-goal-next');
-  if(nextBtn){ nextBtn.style.background='linear-gradient(135deg,'+t.primary+','+t.primary+'aa)'; }
-}
-
-function obBuildConfirm(){
-  const t=getTheme(obData.themeId);
-  const g=getGoal(obData.dailyGoal);
-  const card=document.getElementById('ob-confirm-card');
-  if(card){
-    card.style.background='linear-gradient(135deg,'+t.primary+'22,'+t.primary+'08)';
-    card.style.border='2px solid '+t.primary+'55';
-    card.innerHTML=`
-      <div class="avatar-big" style="background:${t.primary}22;border:3px solid ${t.primary};box-shadow:0 0 24px ${t.primary}44">${obData.emoji||'🦋'}</div>
-      <div style="text-align:center">
-        <div style="color:${t.primary};font-size:24px;font-weight:900">${obData.name}</div>
-        <div style="color:var(--muted);font-size:13px;margin-top:4px">Neues Profil</div>
-      </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
-        <div style="background:${t.primary}22;border:1px solid ${t.primary}44;border-radius:20px;padding:5px 12px;color:${t.primary};font-size:12px;font-weight:800">${t.name}</div>
-        <div style="background:${t.primary}22;border:1px solid ${t.primary}44;border-radius:20px;padding:5px 12px;color:${t.primary};font-size:12px;font-weight:800">${g.emoji} ${g.label}/Tag</div>
-        <div style="background:${t.primary}22;border:1px solid ${t.primary}44;border-radius:20px;padding:5px 12px;color:${t.primary};font-size:12px;font-weight:800">🇧🇬 A1 Start</div>
-      </div>`;
-  }
-  const confirmBtn=document.getElementById('ob-confirm-btn');
-  if(confirmBtn){
-    confirmBtn.style.background='linear-gradient(135deg,'+t.primary+','+t.primary+'aa)';
-    confirmBtn.style.boxShadow='0 8px 24px '+t.primary+'44';
-    confirmBtn.textContent=obData.emoji+' Los geht\'s, '+obData.name+'!';
-  }
-}
-
-function obConfirm(){
-  const profiles=LS.load('profiles',[]);
-  const newProfile={
-    id:Date.now().toString(),
-    name:obData.name.trim(),
-    emoji:obData.emoji,
-    themeId:obData.themeId,
-    dailyGoal:obData.dailyGoal,
-    streak:0, lastDate:null,
-    createdAt:Date.now(),
-  };
-  profiles.push(newProfile);
-  LS.save('profiles',profiles);
-  LS.save('activeProfileId',newProfile.id);
-  activeProfile=newProfile;
-  applyTheme(newProfile.themeId);
-  hideOnboarding();
-  onProfileLoaded(newProfile);
-}
-
-function hideOnboarding(){
-  document.getElementById('onboarding-overlay').classList.remove('active');
-}
-function showOnboarding(){
-  obData={name:"",emoji:"",themeId:"purple",dailyGoal:10};
-  document.getElementById('ob-name-input').value='';
-  document.getElementById('onboarding-overlay').classList.add('active');
-  initOnboarding();
-}
-
-// ── PROFILE SELECTOR
-function showProfileSelector(){
-  const profiles=LS.load('profiles',[]);
-  const list=document.getElementById('profile-list');
-  const t_active=getTheme(activeProfile?.themeId||'purple');
-  list.innerHTML=profiles.map((p,i)=>{
-    const t=getTheme(p.themeId); const g=getGoal(p.dailyGoal);
-    return `<div class="profile-selector-card" style="background:${t.primary}12;border:1px solid ${t.primary}44" id="pcard-${p.id}">
-      <button class="profile-selector-btn" onclick="selectProfile('${p.id}')">
-        <div class="avatar-mid" style="background:${t.primary}22;border:2px solid ${t.primary}66">${p.emoji}</div>
-        <div style="flex:1">
-          <div style="color:${t.primary};font-size:18px;font-weight:900">${p.name}</div>
-          <div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap">
-            <span style="background:${t.primary}22;color:${t.primary};padding:2px 8px;border-radius:8px;font-size:10px;font-weight:800">${t.name}</span>
-            <span style="background:${t.primary}22;color:${t.primary};padding:2px 8px;border-radius:8px;font-size:10px;font-weight:800">${g.emoji} ${g.label}/Tag</span>
-            <span style="background:${t.primary}22;color:${t.primary};padding:2px 8px;border-radius:8px;font-size:10px;font-weight:800">🔥 ${p.streak||0} Tage</span>
-          </div>
-        </div>
-        <div style="color:${t.primary};font-size:20px">▶</div>
-      </button>
-      <button onclick="confirmDeleteProfile('${p.id}')" style="width:100%;background:none;border:none;border-top:1px solid ${t.primary}18;padding:7px;color:var(--muted);font-size:11px;cursor:pointer;font-weight:700;font-family:inherit">🗑️ Profil entfernen</button>
-    </div>`;
-  }).join('');
-
-  if(profiles.length<MAX_PROFILES){
-    list.innerHTML+=`<button class="add-profile-btn" onclick="addNewProfile()">
-      <span style="font-size:24px">➕</span> Neues Profil erstellen
-      <span style="color:var(--muted);font-size:11px">(${MAX_PROFILES-profiles.length} frei)</span>
-    </button>`;
-  }
-  document.getElementById('profile-overlay').classList.add('active');
-}
-
-function hideProfileSelector(){
-  document.getElementById('profile-overlay').classList.remove('active');
-}
-
-function selectProfile(id){
-  const profiles=LS.load('profiles',[]);
-  const p=profiles.find(x=>x.id===id);
-  if(!p) return;
-  LS.save('activeProfileId',id);
-  activeProfile=p;
-  applyTheme(p.themeId);
-  hideProfileSelector();
-  onProfileLoaded(p);
-}
-
-function addNewProfile(){
-  hideProfileSelector();
-  showOnboarding();
-}
-
-function confirmDeleteProfile(id){
-  const card=document.getElementById('pcard-'+id);
-  if(!card) return;
-  const profiles=LS.load('profiles',[]);
-  const p=profiles.find(x=>x.id===id);
-  if(!p) return;
-  card.innerHTML=`<div style="padding:10px 18px;background:rgba(255,107,107,0.1);display:flex;align-items:center;gap:10px">
-    <span style="color:#FF6B6B;font-size:12px;flex:1;font-weight:700">Profil '${p.name}' wirklich löschen?</span>
-    <button onclick="deleteProfile('${id}')" style="background:#FF6B6B;border:none;border-radius:8px;padding:5px 12px;color:white;font-size:11px;font-weight:900;cursor:pointer">Ja</button>
-    <button onclick="showProfileSelector()" style="background:var(--cardl);border:1px solid var(--border);border-radius:8px;padding:5px 12px;color:var(--muted);font-size:11px;cursor:pointer;font-family:inherit">Nein</button>
-  </div>`;
-}
-
-function deleteProfile(id){
-  let profiles=LS.load('profiles',[]);
-  profiles=profiles.filter(p=>p.id!==id);
-  LS.save('profiles',profiles);
-  // Delete associated data
-  localStorage.removeItem('blapp_'+id+'_deck');
-  localStorage.removeItem('blapp_'+id+'_streak');
-  if(profiles.length===0){
-    hideProfileSelector();
-    showOnboarding();
-  } else {
-    if(activeProfile?.id===id){
-      LS.save('activeProfileId',profiles[0].id);
-      activeProfile=profiles[0];
-      applyTheme(profiles[0].themeId);
-    }
-    showProfileSelector();
-  }
-}
-
-// ── Called when profile is active and app should start
-function onProfileLoaded(profile){
-  activeProfile = profile;
-  applyTheme(profile.themeId);
-  // Update greeting everywhere
-  document.querySelectorAll('.profile-greeting').forEach(el => {
-    el.textContent = profile.name + '!';
-  });
-  // Update avatar buttons everywhere
-  document.querySelectorAll('.profile-avatar-btn').forEach(el => {
-    el.textContent = profile.emoji;
-  });
-  // Sync deck for this profile's sentences
-  syncDeck();
-  updateStreak();
-  checkGiftUnlocks();
-  updateStreakBadge();
-  // Re-render current screen
-  renderHome();
-  if(state.screen === 'admin') renderAdmin();
-}
-
-// ── BOOT: check for existing profiles
-function bootProfiles(){
-  const profiles=LS.load('profiles',[]);
-  if(profiles.length===0){
-    showOnboarding();
-    return false;
-  }
-  const activeId=LS.load('activeProfileId',null);
-  const p=profiles.find(x=>x.id===activeId)||profiles[0];
-  activeProfile=p;
-  LS.save('activeProfileId',p.id);
-  applyTheme(p.themeId);
-  onProfileLoaded(p);
-  return true;
-}
 
 // ═══════════════════════════════════════════════════════════════
 // INIT
