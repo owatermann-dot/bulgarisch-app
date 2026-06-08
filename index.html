@@ -306,6 +306,17 @@ input:focus,textarea:focus{outline:none;border-color:var(--primary)!important;}
 
 <script>
 
+window.onerror = function(msg, src, line, col, err) {
+  document.body.style.background = '#1a0000';
+  document.body.innerHTML = '<div style="color:#ff6b6b;padding:24px;font-family:monospace;font-size:13px;line-height:1.6">'
+    + '<b style="font-size:16px">⚠️ KidsLearn Error</b><br><br>'
+    + '<b>Message:</b> ' + msg + '<br>'
+    + '<b>Line:</b> ' + line + ':' + col + '<br><br>'
+    + '<small>Screenshot this and send to developer</small>'
+    + '</div>';
+  return true;
+};
+
 // ══════════════════════════════════════════
 // STORAGE
 // ══════════════════════════════════════════
@@ -1486,7 +1497,7 @@ function obRender(){
   prog.style.background=`linear-gradient(90deg,${t.p},${t.p}88)`;
   const canNext=(OB.step!==1||OB.name.trim().length>=2)&&(OB.step!==2||!!OB.emoji);
   const isLast=OB.step===5;
-  const nextLb=isLast?(isEdit?'💾 Änderungen speichern':'🎉 Los geht's, '+OB.name+'!'):'Weiter →';
+  const nextLb=isLast?(isEdit?'💾 Änderungen speichern':"🎉 Los geht's, "+OB.name+"!"):'Weiter →';
   const nextFn=isLast?'obConfirm()':'obNext()';
   const backBtn=OB.step>0
     ?`<button onclick="OB.step--;obRender()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:0;align-self:flex-start">← Zurück</button>`
