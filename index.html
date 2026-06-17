@@ -272,15 +272,15 @@ input:focus,textarea:focus{outline:none;border-color:var(--primary)!important;}
   <div id="edit-title" style="color:var(--text);font-size:15px;font-weight:900;margin-bottom:12px"></div>
   <div style="margin-bottom:10px">
     <div class="lbl">🇩🇪 Deutsch *</div>
-    <textarea id="e-de" rows="2" style="width:100%;background:var(--cardd);border:1px solid var(--border);border-radius:9px;padding:9px 11px;color:var(--text);font-size:13px;resize:none"></textarea>
+    <textarea id="e-de" rows="2" style="width:100%;background:var(--cardd);border:1px solid var(--border);border-radius:9px;padding:9px 11px;color:var(--text);font-size:16px;resize:none"></textarea>
   </div>
   <div style="margin-bottom:10px">
     <div class="lbl">🇬🇧 English</div>
-    <textarea id="e-en" rows="2" style="width:100%;background:var(--cardd);border:1px solid var(--border);border-radius:9px;padding:9px 11px;color:var(--text);font-size:13px;resize:none"></textarea>
+    <textarea id="e-en" rows="2" style="width:100%;background:var(--cardd);border:1px solid var(--border);border-radius:9px;padding:9px 11px;color:var(--text);font-size:16px;resize:none"></textarea>
   </div>
   <div style="margin-bottom:12px">
     <div class="lbl">🇧🇬 Български *</div>
-    <textarea id="e-bg" rows="2" style="width:100%;background:var(--cardd);border:1px solid var(--border);border-radius:9px;padding:9px 11px;color:var(--text);font-size:13px;resize:none"></textarea>
+    <textarea id="e-bg" rows="2" style="width:100%;background:var(--cardd);border:1px solid var(--border);border-radius:9px;padding:9px 11px;color:var(--text);font-size:16px;resize:none"></textarea>
   </div>
   <button onclick="ttsPrev()" style="background:rgba(168,85,247,.18);border:1px solid rgba(168,85,247,.44);border-radius:8px;padding:7px 14px;color:var(--primary);font-size:11px;font-weight:800;margin-bottom:10px">🔊 TTS Vorschau</button>
   <div style="display:flex;gap:8px">
@@ -306,17 +306,6 @@ input:focus,textarea:focus{outline:none;border-color:var(--primary)!important;}
 
 <script>
 
-window.onerror = function(msg, src, line, col, err) {
-  document.body.style.background = '#1a0000';
-  document.body.innerHTML = '<div style="color:#ff6b6b;padding:24px;font-family:monospace;font-size:13px;line-height:1.6">'
-    + '<b style="font-size:16px">⚠️ KidsLearn Error</b><br><br>'
-    + '<b>Message:</b> ' + msg + '<br>'
-    + '<b>Line:</b> ' + line + ':' + col + '<br><br>'
-    + '<small>Screenshot this and send to developer</small>'
-    + '</div>';
-  return true;
-};
-
 // ══════════════════════════════════════════
 // STORAGE
 // ══════════════════════════════════════════
@@ -331,6 +320,9 @@ const LS = {
 // ══════════════════════════════════════════
 const DAY_MS=86400000, LERNPFAD_BASE=200, MAX_PROFILES=4;
 const LEARN_NEW=20, LEARN_REV=5, EXTRA_LIMIT=20;
+// Interleave: after every LISTEN_BLOCK listens, do one speak rep.
+// New card: 20 listens => 4 blocks of [5× listen + 1× speak]. Review: 5 => 1 block.
+const LISTEN_BLOCK=5;
 let _nid=3000; const nid=()=>++_nid;
 
 const THEMES=[
@@ -400,6 +392,14 @@ const CONVOS={
     {s:'usr',prompt:'Lieblingsessen:',      hint:'Любимата ми храна е пица.'},
   ],
 };
+
+// ── Speak helpers (state-based — NEVER embed dynamic/Cyrillic text in onclick)
+function lPlayAgain(){var q=A.lQueue;if(!q||!q.length)return;var c=q[A.lIdx%q.length];if(c)speak(c.bg,0.82);}
+function speakById(id){var s=allS(null).find(function(x){return x.id===id;});if(s)speak(s.bg);}
+function speakConvoIdx(idx){var conv=CONVOS[A.chatTopic];if(conv&&conv[idx])speak(conv[idx].bg,0.82);}
+function speakNumCur(){var w=BG_NUM[A.numCur];if(w)speak(w);}
+function speakNumVal(n){var w=BG_NUM[n];if(w)speak(w);}
+function openEditById(id){var s=allS(null).find(function(x){return x.id===id;});if(s)openEdit(s,null);}
 const BG_NUM={1:'един/една',2:'два/две',3:'три',4:'четири',5:'пет',6:'шест',7:'седем',8:'осем',9:'девет',10:'десет',
   11:'единадесет',12:'дванадесет',13:'тринадесет',14:'четиринадесет',15:'петнадесет',16:'шестнадесет',
   17:'седемнадесет',18:'осемнадесет',19:'деветнадесет',20:'двадесет',30:'тридесет',40:'четиридесет',
@@ -769,11 +769,11 @@ function fmtDue(ms){const d=ms-Date.now();if(d<=0)return'Jetzt';const h=Math.flo
 let A={
   profile:null, screen:'home',
   learnMode:'saetze', topicId:null,
-  lQueue:[], lIdx:0, lReps:0, lPhase:'listen', lShowBg:false, lTranscript:'',
+  lQueue:[], lIdx:0, lReps:0, lBlock:0, lBlockReps:0, lPhase:'listen', lShowBg:false, lTranscript:'',
   numGroup:0, numMode:'listen', numCur:null, numIn:'', numRes:null,
   numScore:{ok:0,n:0}, numStreak:0,
   chatTopic:'Begrüßung', chatStep:0, chatAnswered:[], chatDone:false, chatHint:false,
-  adminTab:'saetze', adminOpen:null, adminPin:null, pinOK:false,
+  adminTab:'saetze', adminOpen:null, adminPin:null, pinOK:false, adminQ:'',
   uploadId:null, editTarget:null, addTopic:null, importRes:null,
   deck:{}, audio:{}, streak:{count:0,lastDate:null},
 };
@@ -838,10 +838,31 @@ function applyTheme(tid){
     if(bar)bar.style.background=on?t.p:'';
   });
 }
+// ── Bulgarian TTS with async voice loading + bg-BG voice selection
+let _bgVoice=null, _voicesReady=false;
+function pickBgVoice(){
+  if(!('speechSynthesis' in window))return null;
+  const vs=window.speechSynthesis.getVoices();
+  if(!vs||!vs.length)return null;
+  _voicesReady=true;
+  const bg=vs.filter(v=>/^bg(-|_|$)/i.test(v.lang)||/bulgar/i.test(v.name));
+  if(!bg.length){ _bgVoice=null; return null; }
+  // Prefer a female-sounding voice (per pedagogy: young female native speaker)
+  const fem=bg.find(v=>/female|жена|krasimira|silvia|elena|maria/i.test(v.name));
+  _bgVoice=fem||bg[0];
+  return _bgVoice;
+}
+if('speechSynthesis' in window){
+  pickBgVoice();
+  window.speechSynthesis.onvoiceschanged=pickBgVoice;
+}
 function speak(txt,rate=0.82){
-  if(!('speechSynthesis' in window))return;
+  if(!('speechSynthesis' in window)||!txt)return;
+  if(!_voicesReady||!_bgVoice)pickBgVoice();
   window.speechSynthesis.cancel();
-  const u=new SpeechSynthesisUtterance(txt);u.lang='bg-BG';u.rate=rate;
+  const u=new SpeechSynthesisUtterance(txt);
+  u.lang='bg-BG';u.rate=rate;
+  if(_bgVoice)u.voice=_bgVoice;
   window.speechSynthesis.speak(u);
 }
 function toast(msg,dur=2500){
@@ -1066,7 +1087,7 @@ function renderTopicPicker(){
   el.innerHTML=h;
 }
 function startLearn(tid){
-  A.topicId=tid;A.lIdx=0;A.lReps=0;A.lPhase='listen';A.lShowBg=false;A.lTranscript='';
+  A.topicId=tid;A.lIdx=0;A.lReps=0;A.lBlock=0;A.lBlockReps=0;A.lPhase='listen';A.lShowBg=false;A.lTranscript='';
   A.lQueue=buildQ(tid);
   renderSents();
 }
@@ -1094,6 +1115,8 @@ function renderSents(){
   const card=A.deck[cur.id];
   const isNew=card?.phase==='new';
   const rTgt=isNew?LEARN_NEW:LEARN_REV;
+  const blocksTotal=Math.ceil(rTgt/LISTEN_BLOCK);
+  const blockTgt=Math.min(LISTEN_BLOCK,rTgt-A.lBlock*LISTEN_BLOCK);
   const topicName=A.topicId?(getTopics().find(x=>x.id===A.topicId)?.name||''):'Alle Themen';
   const dot=(i)=>`<div style="flex:1;height:6px;border-radius:3px;background:${i<A.lReps?t.p:'rgba(255,255,255,.1)'};transition:background .25s"></div>`;
   const dotsH=isNew
@@ -1104,13 +1127,13 @@ function renderSents(){
   if(A.lPhase==='listen'){
     action=`<button onclick="lPlay()" style="background:linear-gradient(135deg,${t.p},${t.p}cc);border:none;border-radius:16px;padding:14px;color:#fff;font-size:14px;font-weight:900;display:flex;align-items:center;justify-content:center;gap:10px;width:100%;cursor:pointer">
       <span style="font-size:22px">🔊</span>
-      ${A.lReps===0?'Anhören':A.lReps>=rTgt?'Noch einmal':`Nochmal (${A.lReps}/${rTgt})`}
+      ${A.lBlockReps===0?'Anhören':`Nochmal (${A.lBlockReps}/${blockTgt})`}
     </button>`;
   } else if(A.lPhase==='speak'){
-    action=`<div style="background:rgba(255,107,107,.15);border-radius:11px;padding:10px;border:1px solid rgba(255,107,107,.33);text-align:center;color:var(--text);font-size:13px;font-weight:700">🎤 Sprich den Satz auf Bulgarisch!</div>
+    action=`<div style="background:rgba(255,107,107,.15);border-radius:11px;padding:10px;border:1px solid rgba(255,107,107,.33);text-align:center;color:var(--text);font-size:13px;font-weight:700">🎤 Sprich den Satz auf Bulgarisch!${blocksTotal>1?` <span style="color:var(--muted);font-weight:600">(Block ${A.lBlock+1}/${blocksTotal})</span>`:''}</div>
     ${A.lTranscript?`<div style="background:rgba(56,189,248,.12);border-radius:9px;padding:7px 11px;border:1px solid rgba(56,189,248,.33);color:#38BDF8;font-size:12px">🎤 Erkannt: „${A.lTranscript}"</div>`:''}
     <div style="display:flex;gap:8px">
-      <button onclick="speak('${esc(cur.bg)}',0.82)" style="background:var(--cardl);border:1px solid var(--border);border-radius:11px;padding:11px 14px;color:var(--muted);font-size:18px;cursor:pointer">🔊</button>
+      <button onclick="lPlayAgain()" style="background:var(--cardl);border:1px solid var(--border);border-radius:11px;padding:11px 14px;color:var(--muted);font-size:18px;cursor:pointer">🔊</button>
       <button id="rec-btn" onclick="lRecord()" style="flex:1;border:none;border-radius:11px;padding:12px;background:linear-gradient(135deg,var(--teal),#00b894);color:#fff;font-size:14px;font-weight:900;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer">
         <span style="font-size:20px">🎤</span>Sprechen
       </button>
@@ -1162,21 +1185,25 @@ function renderSents(){
     </div>
     <div class="card">
       <div style="display:flex;justify-content:space-between;margin-bottom:7px">
-        <div class="lbl" style="margin:0">${isNew?'ERSTE BEGEGNUNG — 20×':'WIEDERHOLUNG — '+rTgt+'×'}</div>
+        <div class="lbl" style="margin:0">${isNew?`HÖREN & SPRECHEN — BLOCK ${Math.min(A.lBlock+1,blocksTotal)}/${blocksTotal}`:'WIEDERHOLUNG — '+rTgt+'×'}</div>
         <div style="color:${A.lReps>=rTgt?'var(--teal)':t.p};font-size:12px;font-weight:900">${A.lReps}/${rTgt}${A.lReps>=rTgt?' ✓':''}</div>
       </div>
       ${dotsH}
       <div style="color:var(--muted);font-size:10px;margin-top:5px">
-        ${A.lReps<rTgt?`Noch ${rTgt-A.lReps}× anhören`:'🎯 Bereit — jetzt nachsprechen!'}
+        ${A.lPhase==='listen'?(A.lBlockReps<blockTgt?`Noch ${blockTgt-A.lBlockReps}× hören, dann sprechen 🎤`:'🎯 Jetzt nachsprechen!'):A.lPhase==='speak'?'🎤 Sprich nach — dann geht es weiter':'Bewerte dich selbst ⭐'}
       </div>
     </div>
     ${action}`;
 }
+function lBlockTarget(cur){
+  const isNew=A.deck[cur.id]?.phase==='new';
+  const rTgt=isNew?LEARN_NEW:LEARN_REV;
+  return Math.min(LISTEN_BLOCK, rTgt-A.lBlock*LISTEN_BLOCK);
+}
 function lPlay(){
   const q=A.lQueue[A.lIdx%Math.max(1,A.lQueue.length)];if(!q)return;
-  speak(q.bg);A.lShowBg=true;A.lReps++;
-  const isNew=A.deck[q.id]?.phase==='new';
-  if(A.lReps>=(isNew?LEARN_NEW:LEARN_REV))setTimeout(()=>{A.lPhase='speak';renderSents();},900);
+  speak(q.bg);A.lShowBg=true;A.lReps++;A.lBlockReps++;
+  if(A.lBlockReps>=lBlockTarget(q))setTimeout(()=>{A.lPhase='speak';renderSents();},900);
   else renderSents();
 }
 function lRecord(){
@@ -1187,10 +1214,23 @@ function lRecord(){
   if(SRE){try{
     const r=new SRE();r.lang='bg-BG';r.interimResults=false;
     r.onresult=e=>{A.lTranscript=e.results[0][0].transcript;};
-    r.onerror=r.onend=()=>{A.lPhase='result';renderSents();};
+    r.onerror=r.onend=()=>{lAfterSpeak();};
     r.start();return;
   }catch(e){}}
-  setTimeout(()=>{A.lPhase='result';renderSents();},2400);
+  setTimeout(()=>{lAfterSpeak();},2400);
+}
+// After a speak rep: go to next listen-block, or to rating if this was the last block
+function lAfterSpeak(){
+  const q=A.lQueue[A.lIdx%Math.max(1,A.lQueue.length)];if(!q){renderSents();return;}
+  const isNew=A.deck[q.id]?.phase==='new';
+  const rTgt=isNew?LEARN_NEW:LEARN_REV;
+  const blocksTotal=Math.ceil(rTgt/LISTEN_BLOCK);
+  if(A.lBlock+1>=blocksTotal){
+    A.lPhase='result';
+  } else {
+    A.lBlock++;A.lBlockReps=0;A.lTranscript='';A.lPhase='listen';
+  }
+  renderSents();
 }
 function lRate(q){
   const cur=A.lQueue[A.lIdx%Math.max(1,A.lQueue.length)];if(!cur)return;
@@ -1199,7 +1239,7 @@ function lRate(q){
   A.deck[cur.id]=upd;saveDeck();
   if(q===5&&Math.random()>.5)showGoodie();
   checkGifts();
-  A.lIdx++;A.lReps=0;A.lPhase='listen';A.lShowBg=false;A.lTranscript='';
+  A.lIdx++;A.lReps=0;A.lBlock=0;A.lBlockReps=0;A.lPhase='listen';A.lShowBg=false;A.lTranscript='';
   badge();renderSents();
   if(A.screen==='home')renderHome();
 }
@@ -1221,13 +1261,13 @@ function renderNums(){
   const acc=A.numScore.n>0?Math.round(A.numScore.ok/A.numScore.n*100):0;
   let action='';
   if(A.numMode==='listen'){
-    action=`<button onclick="speak('${word}');document.getElementById('num-bg-div').style.opacity=1"
+    action=`<button onclick="speakNumCur();document.getElementById('num-bg-div').style.opacity=1"
       style="background:linear-gradient(135deg,${t.p},${t.p}cc);border:none;border-radius:16px;padding:14px;color:#fff;font-size:14px;font-weight:900;width:100%;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer">
       <span style="font-size:22px">🔊</span>Anhören & Zeigen
     </button>
     <button onclick="pickNum();renderNums()" style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:12px;color:var(--muted);font-size:13px;font-weight:800;width:100%;cursor:pointer">Nächste →</button>`;
   } else if(A.numMode==='type'){
-    action=`<button onclick="speak('${word}')" style="background:${t.p}22;border:1px solid ${t.p}44;border-radius:12px;padding:10px;color:${t.p};font-size:13px;font-weight:800;width:100%;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer">
+    action=`<button onclick="speakNumCur()" style="background:${t.p}22;border:1px solid ${t.p}44;border-radius:12px;padding:10px;color:${t.p};font-size:13px;font-weight:800;width:100%;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer">
       <span style="font-size:18px">🔊</span>Begriff anhören
     </button>
     <div style="display:flex;gap:8px">
@@ -1245,7 +1285,7 @@ function renderNums(){
   } else {
     const wrong=Object.keys(BG_NUM).map(Number).filter(n=>n!==A.numCur).sort(()=>Math.random()-.5).slice(0,3);
     const opts=[A.numCur,...wrong].sort(()=>Math.random()-.5);
-    action=`<button onclick="speak('${word}')" style="background:linear-gradient(135deg,var(--rose),#ff8e53);border:none;border-radius:16px;padding:14px;color:#fff;font-size:14px;font-weight:900;width:100%;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer">
+    action=`<button onclick="speakNumCur()" style="background:linear-gradient(135deg,var(--rose),#ff8e53);border:none;border-radius:16px;padding:14px;color:#fff;font-size:14px;font-weight:900;width:100%;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer">
       <span style="font-size:22px">🔊</span>Begriff anhören
     </button>
     <div style="display:flex;flex-wrap:wrap;gap:7px">
@@ -1294,7 +1334,7 @@ function renderNums(){
       <div class="lbl">Referenz — tippen zum Hören</div>
       <div style="display:flex;flex-wrap:wrap;gap:4px">
         ${Object.entries(BG_NUM).slice(0,20).map(([n,w])=>`
-          <button onclick="speak('${w}')" style="background:var(--cardd);border:1px solid var(--border);border-radius:8px;padding:4px 8px;display:flex;flex-direction:column;align-items:center;gap:1px;cursor:pointer">
+          <button onclick="speakNumVal(${n})" style="background:var(--cardd);border:1px solid var(--border);border-radius:8px;padding:4px 8px;display:flex;flex-direction:column;align-items:center;gap:1px;cursor:pointer">
             <span style="color:${t.p};font-size:12px;font-weight:900">${n}</span>
             <span style="color:var(--primary);font-size:9px">${w.split('/')[0]}</span>
           </button>`).join('')}
@@ -1341,7 +1381,7 @@ function renderConvoMsgs(){
         <div style="width:32px;height:32px;border-radius:16px;flex-shrink:0;background:linear-gradient(135deg,var(--primary),var(--rose));display:flex;align-items:center;justify-content:center;font-size:15px">🦋</div>
         <div>
           <div class="bapp"><div style="color:var(--text);font-size:14px;font-weight:700">${msg.bg}</div><div style="color:var(--muted);font-size:11px;margin-top:2px">${msg.de}</div></div>
-          <button onclick="speak('${esc(msg.bg)}',0.82)" style="background:none;border:none;color:var(--primary);font-size:10px;font-weight:700;cursor:pointer;margin-top:2px;margin-left:3px">🔊</button>
+          <button onclick="speakConvoIdx(${i})" style="background:none;border:none;color:var(--primary);font-size:10px;font-weight:700;cursor:pointer;margin-top:2px;margin-left:3px">🔊</button>
         </div>
       </div>`;
     }
@@ -1487,6 +1527,27 @@ function obStart(profile){
 }
 function obHide(){document.getElementById('ob-overlay').classList.remove('open');}
 
+// Live name input — updates preview + Next WITHOUT re-rendering the input
+// (re-rendering on every keystroke is what dismissed the mobile keyboard)
+function obNameInput(v){
+  OB.name=v;
+  const t=getTheme(OB.themeId);
+  const ok=v.trim().length>=2;
+  const inp=document.getElementById('ob-name-inp');
+  if(inp)inp.style.borderColor=ok?t.p:'var(--border)';
+  const pvw=document.getElementById('ob-name-pvwrap');
+  const pvn=document.getElementById('ob-name-pv');
+  if(pvn)pvn.textContent=v.trim()||'...';
+  if(pvw)pvw.style.opacity=ok?'1':'0';
+  const nb=document.getElementById('ob-next-btn');
+  if(nb){
+    nb.disabled=!ok;
+    nb.style.background=ok?`linear-gradient(135deg,${t.p},${t.p}cc)`:'var(--cardl)';
+    nb.style.color=ok?'#fff':'var(--muted)';
+    nb.style.cursor=ok?'pointer':'not-allowed';
+  }
+}
+
 function obRender(){
   const el=document.getElementById('ob-body');
   const prog=document.getElementById('ob-prog');
@@ -1497,12 +1558,12 @@ function obRender(){
   prog.style.background=`linear-gradient(90deg,${t.p},${t.p}88)`;
   const canNext=(OB.step!==1||OB.name.trim().length>=2)&&(OB.step!==2||!!OB.emoji);
   const isLast=OB.step===5;
-  const nextLb=isLast?(isEdit?'💾 Änderungen speichern':"🎉 Los geht's, "+OB.name+"!"):'Weiter →';
+  const nextLb=isLast?(isEdit?'💾 Änderungen speichern':"🎉 Los geht’s, "+OB.name.trim()+"!"):'Weiter →';
   const nextFn=isLast?'obConfirm()':'obNext()';
   const backBtn=OB.step>0
     ?`<button onclick="OB.step--;obRender()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:0;align-self:flex-start">← Zurück</button>`
     :'';
-  const nextBtn=`<button onclick="${nextFn}" ${canNext?'':'disabled'}
+  const nextBtn=`<button id="ob-next-btn" onclick="${nextFn}" ${canNext?'':'disabled'}
     style="width:100%;background:${canNext?`linear-gradient(135deg,${t.p},${t.p}cc)`:'var(--cardl)'};
     border:none;border-radius:16px;padding:15px;color:${canNext?'#fff':'var(--muted)'};
     font-size:15px;font-weight:900;cursor:${canNext?'pointer':'not-allowed'};transition:all .2s">
@@ -1530,12 +1591,13 @@ function obRender(){
     </div>
     <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:14px">
       <input id="ob-name-inp" type="text" maxlength="20" value="${OB.name}" placeholder="Name eingeben..."
-        oninput="OB.name=this.value.trim();obRender()"
-        style="width:100%;background:var(--cardd);border:2px solid ${OB.name.length>=2?t.p:'var(--border)'};
+        autocomplete="off" autocorrect="off" autocapitalize="words" spellcheck="false"
+        oninput="obNameInput(this.value)"
+        style="width:100%;background:var(--cardd);border:2px solid ${OB.name.trim().length>=2?t.p:'var(--border)'};
         border-radius:16px;padding:16px;color:var(--text);font-size:18px;font-weight:700;text-align:center;transition:border-color .2s"/>
-      <div style="text-align:center;opacity:${OB.name.length>=2?1:0};transition:opacity .3s">
+      <div id="ob-name-pvwrap" style="text-align:center;opacity:${OB.name.trim().length>=2?1:0};transition:opacity .3s">
         <span style="color:var(--muted)">Hallo, </span>
-        <span style="color:${t.p};font-size:18px;font-weight:900">${OB.name||'...'}</span>
+        <span id="ob-name-pv" style="color:${t.p};font-size:18px;font-weight:900">${OB.name.trim()||'...'}</span>
         <span style="color:var(--muted)"> 👋</span>
       </div>
     </div>
@@ -1916,14 +1978,23 @@ function setAdminTab(tab){
 }
 function renderAdminSents(){
   const body=document.getElementById('admin-body');
+  const qv=(A.adminQ||'').split('"').join('&quot;');
+  body.innerHTML=`<div style="position:relative;margin-bottom:8px">
+    <span style="position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--muted)">🔍</span>
+    <input id="adm-search" type="text" placeholder="Satz suchen..." value="${qv}"
+      autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+      oninput="A.adminQ=this.value;renderAdminList()"
+      style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:9px 9px 9px 28px;color:var(--text);font-size:16px"/>
+  </div>
+  <div id="adm-list"></div>`;
+  renderAdminList();
+}
+function renderAdminList(){
+  const list=document.getElementById('adm-list');if(!list)return;
   const t=getTheme(A.profile?.themeId||'purple');
   const topics=getTopics();
-  let h=`<div style="position:relative;margin-bottom:8px">
-    <span style="position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--muted)">🔍</span>
-    <input id="adm-search" type="text" placeholder="Satz suchen..." oninput="renderAdminSents()"
-      style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:8px 9px 8px 28px;color:var(--text);font-size:12px"/>
-  </div>`;
-  const q=(document.getElementById('adm-search')?.value||'').toLowerCase();
+  const q=(A.adminQ||'').toLowerCase();
+  let h='';
   topics.forEach(tp=>{
     const filtered=q?tp.sentences.filter(s=>s.de.toLowerCase().includes(q)||s.bg.includes(q)):tp.sentences;
     if(q&&!filtered.length)return;
@@ -1933,7 +2004,7 @@ function renderAdminSents(){
     const open=A.adminOpen===tp.id;
     const circ=2*Math.PI*13;
     h+=`<div class="tcluster" style="border-color:${open?tp.color+'55':'var(--border)'}">
-      <button onclick="A.adminOpen=A.adminOpen==='${tp.id}'?null:'${tp.id}';renderAdminSents()"
+      <button onclick="A.adminOpen=A.adminOpen==='${tp.id}'?null:'${tp.id}';renderAdminList()"
         style="width:100%;background:none;border:none;cursor:pointer;padding:12px 13px;display:flex;align-items:center;gap:10px;text-align:left">
         <div style="width:38px;height:38px;border-radius:10px;flex-shrink:0;background:${tp.color}22;border:1px solid ${tp.color}44;display:flex;align-items:center;justify-content:center;font-size:18px">${tp.emoji}</div>
         <div style="flex:1">
@@ -1969,7 +2040,6 @@ function renderAdminSents(){
       filtered.forEach(s=>{
         const ha=!!A.audio[s.id],card=A.deck[s.id];
         const pc={new:'var(--muted)',learning:'var(--gold)',review:'var(--primary)',mastered:'var(--teal)'}[card?.phase]||'var(--muted)';
-        const escBg=esc(s.bg);
         h+=`<div class="srow" style="border-color:${ha?'rgba(6,214,160,.33)':'var(--border)'}">
           <div style="width:6px;height:6px;border-radius:3px;background:${pc};flex-shrink:0;margin-top:5px"></div>
           <div style="flex:1;min-width:0">
@@ -1983,9 +2053,9 @@ function renderAdminSents(){
             <div style="color:var(--primary);font-size:11px;margin-top:1px">${s.bg}</div>
           </div>
           <div style="display:flex;gap:3px;flex-shrink:0">
-            <button class="sbtn" style="background:rgba(168,85,247,.18);color:var(--primary)" onclick="speak('${escBg}')">🔊</button>
+            <button class="sbtn" style="background:rgba(168,85,247,.18);color:var(--primary)" onclick="speakById(${s.id})">🔊</button>
             <button class="sbtn" style="background:rgba(6,214,160,.18);color:var(--teal)" onclick="requirePIN(()=>{A.uploadId=${s.id};document.getElementById('audio-file-inp').click()})">⬆️</button>
-            <button class="sbtn" style="background:rgba(56,189,248,.18);color:#38BDF8" onclick="openEdit(${JSON.stringify(s).replace(/"/g,'&quot;')},null)">✏️</button>
+            <button class="sbtn" style="background:rgba(56,189,248,.18);color:#38BDF8" onclick="openEditById(${s.id})">✏️</button>
             ${s.origin==='teacher'?`<button class="sbtn" style="background:rgba(255,107,107,.18);color:var(--rose)" onclick="requirePIN(()=>delSent(${s.id},'${tp.id}'))">🗑️</button>`:''}
           </div>
         </div>`;
@@ -2011,7 +2081,7 @@ function renderAdminSents(){
       </div>`;
     }).join('')}
   </div>`;
-  body.innerHTML=h;
+  list.innerHTML=h;
 }
 function delSent(id,tid){
   let topics=getTopics().map(t=>t.id===tid?{...t,sentences:t.sentences.filter(s=>s.id!==id)}:t);
@@ -2153,6 +2223,3 @@ boot();
 </script>
 </body>
 </html>
-// Safe escape for Bulgarian text in HTML onclick attributes  
-function esc(s){ return s.replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
-
